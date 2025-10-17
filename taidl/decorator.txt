@@ -1,0 +1,195 @@
+import os, sys, time, importlib, copy
+from collections import defaultdict
+from pathlib import Path
+from . import api
+
+base_dir = os.path.dirname(os.path.abspath(__file__))
+# Debug print custom call
+DEBUG_BUILD_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(base_dir)))), "xla-debug", "build"
+)
+sys.path.append(DEBUG_BUILD_PATH)
+
+from jax.extend import ffi
+import print_handler_ext
+
+import numpy as np
+import jax.numpy as jnp
+import jax
+from jax.lib import xla_bridge, xla_client
+from jax import devices
+
+executable_file = TARGET_NAME
+platform = "CPU"
+
+backend = None
+
+
+# Generates XLA backend
+def set_simulation_backend(platform = "CPU"):
+    global backend
+    jax.config.update("jax_enable_x64", True)
+    jax.config.update("jax_default_matmul_precision", "highest")
+    if(platform == "CPU"):
+        backend = xla_bridge.get_backend("cpu")
+    elif(platform == "GPU"):
+        backend = xla_bridge.get_backend("gpu")
+    else:
+        print("Invalid Platform:", platform)
+        exit(0)
+    #print(f"Generated {platform} backend")
+
+def gpu_check():
+    return any(device.platform == 'gpu' for device in devices())
+
+def gen_arguments(inputs):
+    arguments = []
+    for input in inputs:
+        if(input['dtype'] == np.float32):
+            arguments.append(np.random.uniform(low=-200, high=300, size=input['shape']).astype(input['dtype']))
+        else:
+            arguments.append(np.random.randint(low=np.iinfo(input['dtype']).min, high=np.iinfo(input['dtype']).max, size=input['shape'], dtype=input['dtype']))
+
+    return arguments
+
+def verifier(ans, gold, debug=0):
+    matching = 1
+    for i in range(len(ans)):
+        if(np.allclose(ans[i],gold[i], atol=1e-2)):
+            if(debug):
+                print("Verified output", i)
+        else:
+            if(debug):
+                print("Mismatched output", i)
+                print("GOLD", i)
+                print(gold[i])
+                print("OUTPUT", i)
+                print(ans[i])
+                print("Matching indices: ", np.sum(gold[i] == ans[i]))
+                print("GOLD SHAPE:", gold[i].shape)
+                print("ANS SHAPE:", ans[i].shape)
+                pl = np.argwhere(ans[i] != gold[i])[0]
+                print(ans[i][pl])
+                print(gold[i][pl])
+                diff = np.abs(gold[i] - ans[i])
+                print("Max diff:", np.max(diff))
+            matching = 0
+    return matching
+
+def reset_api():
+    api.loop_variables = ["main"]
+    api.conditional_clauses = []
+    api.cur_scope = "main"
+
+    api.instruction_store = []
+    api.compare_function = ""
+    api.call_statement = ""
+    api.state = copy.deepcopy(api.default_state)
+    api.total_cost = 0
+    api.instruction_scopes = defaultdict(list)
+    api.scope_tuple_count = defaultdict(int)
+    api.instructions = []
+
+def generate_hlo(hbm: int) -> str:
+    hlo_text = api.generate_full_hlotext(hbm)
+    #with open("test.hlo", "w") as f:
+        #f.write(hlo_text)
+    return hlo_text
+
+
+def compile_or_load_executable(name: str, hlo_str: str):
+    global backend
+    target_file = f"{name}.pb"
+    for name, target in print_handler_ext.registrations().items():
+        ffi.register_ffi_target(name, target)
+
+    if Path(target_file).is_file():
+        with open(target_file, "rb") as f:
+            api.executable = backend.deserialize_executable(f.read())
+        return
+
+    # Parse and compile HLO text
+    options = xla_client.CompileOptions()
+    hlo_module = xla_client._xla.hlo_module_from_text(hlo_str)
+    computation = xla_client.XlaComputation(hlo_module.as_serialized_hlo_module_proto())
+    mlir = xla_client._xla.mlir.xla_computation_to_mlir_module(computation)
+    executable = backend.compile(mlir, compile_options=options)
+    # print(executable.local_devices())
+
+    # with open(target_file, "wb") as f:
+    # f.write(backend.serialize_executable(executable))
+
+    api.executable = executable
+
+
+def kernel(hbm: int, input: list, output: list):
+    def decorator(func):
+        def launchable(mode):
+            def wrapper(f, *args, **kwargs):
+                
+                if mode != 'fsim':
+                    f()
+                if mode == 'fsim-compile':
+                    return input, api.compile_time
+
+                if mode == 'cost':
+                    return api.total_cost
+
+                if mode == 'fsim':
+                    global backend
+                    input_hbm = np.zeros(hbm, dtype=np.int8)
+                    assert len(args) == len(input), "args != input"
+                    for arg, spec in zip(args, input):
+                        assert arg.shape == spec['shape'], "arg.shape != input.shape"
+                        assert arg.dtype == spec['dtype'], "arg.dtype != input.dtype"
+                        flat = arg.flatten().view(np.int8)
+                        input_hbm[spec['addr']: spec['addr'] + flat.size] = flat
+                    #if api.executable is None:
+                        #with open(f"{executable_file}.pb", "rb") as bf:
+                            #api.executable = backend.deserialize_executable(bf.read())
+
+                    arg = np.zeros((1, hbm), dtype=np.int8)
+                    arg[0] = input_hbm
+                    arg = jax.device_put(jnp.asarray(arg, dtype=jnp.int8), device=api.executable.local_devices()[0])
+
+                    start = time.time()
+                    result = api.executable.execute(arg)
+
+                    # Wait for result to finish
+                    jax.block_until_ready(result)
+
+                    elapsed = round((time.time() - start) * 1000, 3)
+
+                    output_hbm = result[0]
+                    outputs = []
+
+                    for out in output:
+                        addr, shape, dtype = out['addr'], out['shape'], out['dtype']
+                        size = np.prod(shape) * np.dtype(dtype).itemsize
+                        data = np.array(output_hbm[addr:addr + size]).view(dtype).reshape(shape)
+                        outputs.append(data)
+
+                    return outputs, elapsed
+            api.mode = mode
+            if mode == 'fsim-compile':
+                reset_api()
+                api.instructions = []
+                counters, _ = api.semantic_init(hbm)
+                api.global_counters = counters
+                func()
+                hlo = generate_hlo(hbm)
+
+                start = time.time()
+                compile_or_load_executable(executable_file, hlo)
+                elapsed = round((time.time() - start) * 1000, 3)
+                api.compile_time = elapsed
+
+                #print(f"Total compilation time (including HLO parsing): {elapsed} ms")
+
+            return lambda *args, **kwargs: wrapper(func, *args, **kwargs)
+        return launchable
+    return decorator
+
+
+def launch(func, mode):
+    return func(mode)
