@@ -4,8 +4,3 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
-*.log
-*.pb
-**/build/
-**/sim*/
