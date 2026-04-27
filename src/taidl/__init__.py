@@ -1,4 +1,6 @@
-"""TAIDLv2 - Tensor Accelerator ISA Definition Language v2"""
+"""TAIDL - Tensor Accelerator ISA Definition Language"""
+
+__version__ = "2.0.0"
 
 from .accelerator import Accelerator
 from .instruction import Instruction
