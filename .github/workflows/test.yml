@@ -25,9 +25,4 @@ jobs:
           fi
 
       - name: Run tests
-        run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/workspace \
-            -w /workspace \
-            devanshdvj/act:v1.0-amd64 \
-            bash -lc "pip install -e . && pip install pytest && pytest tests/ -v"
+        run: ./tests/pytest.sh
