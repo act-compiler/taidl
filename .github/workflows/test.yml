@@ -12,15 +12,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
+      - name: Load act.env
+        run: cat docker/act.env >> $GITHUB_ENV
 
-      - name: Install dependencies
+      - name: Pull or build Docker image
         run: |
-          pip install -e .
-          pip install pytest
+          if ! docker pull devanshdvj/act:v1.0-amd64 2>/dev/null; then
+            echo "Pull failed, building from source..."
+            git clone $ACT_REPO /tmp/act
+            cd /tmp/act && git checkout $ACT_TAG
+            cd docker && ./build.sh
+          fi
 
       - name: Run tests
-        run: pytest tests/ -v
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace \
+            devanshdvj/act:v1.0-amd64 \
+            bash -lc "pip install -e . && pip install pytest && pytest tests/ -v"
