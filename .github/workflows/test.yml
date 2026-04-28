@@ -17,10 +17,10 @@ jobs:
 
       - name: Pull or build Docker image
         run: |
-          if ! docker pull devanshdvj/act:v1.0-amd64 2>/dev/null; then
+          if ! docker pull devanshdvj/act:${ACT_DOCKERHUB_TAG}-amd64 2>/dev/null; then
             echo "Pull failed, building from source..."
-            git clone $ACT_REPO /tmp/act
-            cd /tmp/act && git checkout $ACT_TAG
+            git clone $ACT_GITHUB_REPO /tmp/act
+            cd /tmp/act && git checkout $ACT_GITHUB_TAG
             cd docker && ./build.sh
           fi
 
