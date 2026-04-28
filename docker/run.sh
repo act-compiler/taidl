@@ -3,14 +3,15 @@ set -euo pipefail
 
 # Change to script directory
 cd "$(dirname "$0")"
+source act.env
 
 # Detect architecture
 ARCH=$(uname -m)
 
 if [ "$ARCH" = "x86_64" ]; then
-    IMAGE_NAME="devanshdvj/act:v1.0-amd64"
+    IMAGE_NAME="devanshdvj/act:${ACT_DOCKERHUB_TAG}-amd64"
 elif [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then
-    IMAGE_NAME="devanshdvj/act:v1.0-arm64"
+    IMAGE_NAME="devanshdvj/act:${ACT_DOCKERHUB_TAG}-arm64"
 else
     echo "Error: Unsupported architecture: $ARCH"
     exit 1
