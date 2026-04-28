@@ -15,7 +15,7 @@ readme = "README.md"
 dependencies = ["antlr4-python3-runtime==4.9.2"]
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["."]
 
 [tool.setuptools.package-data]
 "taidl.antlr4" = ["*.g4", "*.interp", "*.tokens"]
