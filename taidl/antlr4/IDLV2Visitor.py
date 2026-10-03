@@ -69,5 +69,10 @@ class IDLV2Visitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by IDLV2Parser#name.
+    def visitName(self, ctx:IDLV2Parser.NameContext):
+        return self.visitChildren(ctx)
+
+
 
 del IDLV2Parser

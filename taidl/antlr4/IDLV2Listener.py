@@ -116,5 +116,14 @@ class IDLV2Listener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by IDLV2Parser#name.
+    def enterName(self, ctx:IDLV2Parser.NameContext):
+        pass
+
+    # Exit a parse tree produced by IDLV2Parser#name.
+    def exitName(self, ctx:IDLV2Parser.NameContext):
+        pass
+
+
 
 del IDLV2Parser

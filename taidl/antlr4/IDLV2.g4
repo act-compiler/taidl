@@ -2,7 +2,7 @@ grammar IDLV2;
 
 // === Parser Rules ===
 
-module         : ENTRY IDENTIFIER LBRACE instruction+ RBRACE ;
+module         : ENTRY name LBRACE instruction+ RBRACE ;
 
 instruction    : ROOT? IDENTIFIER EQUAL result_type OPERATION LPAREN operands? RPAREN attributes? SEMICOLON? ;
 
@@ -12,7 +12,7 @@ operands       : operand (COMMA operand)* ;
 operand        : value ;
 
 attributes     : COMMA attribute (COMMA attribute)* ;
-attribute      : IDENTIFIER EQUAL attributeValue ;
+attribute      : name EQUAL attributeValue ;
 
 attributeValue : braceList | sliceList | value ;
 braceList      : LBRACE (value (COMMA value)*)? RBRACE ;
@@ -21,6 +21,9 @@ sliceList      : LBRACE ( LBRACKET value COLON value (COLON value)? RBRACKET (CO
 shape          : value (COMMA value)* ;
 
 value          : INT | NUMBER | IDENTIFIER | EXPRESSION ;
+
+// An ENTRY's or attribute's name: a bare or operation word
+name           : IDENTIFIER | OPERATION ;
 
 // === Lexer Rules ===
 
