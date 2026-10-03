@@ -92,3 +92,5 @@ IDENTIFIER : '%'?[a-zA-Z_@][a-zA-Z0-9_.@]* ;
 // A comment runs to the end of its line
 COMMENT    : '//' ~[\r\n]* -> skip ;
 WS         : [ \t\r\n]+ -> skip ;
+// Any other character, which no parser rule accepts
+ERROR_CHAR : . ;
