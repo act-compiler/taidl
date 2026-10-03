@@ -20,7 +20,7 @@ sliceList      : LBRACE ( LBRACKET value COLON value (COLON value)? RBRACKET (CO
 
 shape          : value (COMMA value)* ;
 
-value          : INT | IDENTIFIER | EXPRESSION ;
+value          : INT | NUMBER | IDENTIFIER | EXPRESSION ;
 
 // === Lexer Rules ===
 
@@ -82,6 +82,8 @@ COMMA    : ',' ;
 
 // Tokens
 INT        : [0-9]+ ;
+// Signed, fractional or exponent literals; a bare integer stays INT
+NUMBER     : '-'? [0-9]+ ('.' [0-9]+)? ([eE] [+-]? [0-9]+)? ;
 EXPRESSION : '`' (~'`')* '`' ;
 IDENTIFIER : '%'?[a-zA-Z_@][a-zA-Z0-9_.@]* ;
 WS         : [ \t\r\n]+ -> skip ;
