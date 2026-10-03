@@ -108,3 +108,15 @@ class TestLiterals:
         values = tree.instruction(1).attributes().attribute(0).attributeValue().braceList().value()
         assert [v.getText() for v in values] == ['-1', '0.5', '2']
         assert [v.NUMBER() is not None for v in values] == [True, True, False]
+
+
+class TestShapes:
+    def test_rank0_result(self):
+        tree = parse(spec('ROOT %Out0 = f32[] constant(-1);'))
+        result = tree.instruction(1).result_type()
+        assert result.TYPE().getText() == 'f32'
+        assert result.shape() is None
+
+    def test_ranked_result(self):
+        tree = parse(spec('ROOT %Out0 = f32[`@c.n`,4] broadcast(%In1), dimensions={1};'))
+        assert tree.instruction(1).result_type().shape().getText() == '`@c.n`,4'

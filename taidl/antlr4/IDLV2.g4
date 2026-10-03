@@ -6,7 +6,7 @@ module         : ENTRY IDENTIFIER LBRACE instruction+ RBRACE ;
 
 instruction    : ROOT? IDENTIFIER EQUAL result_type OPERATION LPAREN operands? RPAREN attributes? SEMICOLON? ;
 
-result_type    : TYPE LBRACKET shape RBRACKET ;
+result_type    : TYPE LBRACKET shape? RBRACKET ;
 
 operands       : operand (COMMA operand)* ;
 operand        : value ;
