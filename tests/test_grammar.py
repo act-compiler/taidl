@@ -49,10 +49,13 @@ FAMILIES = {
 }
 OPERATIONS = ' '.join(FAMILIES.values()).split()
 
+TYPES = ['s8', 's16', 's32', 'u8', 'u16', 'u32', 'f32', 'f16', 'bf16', 'pred']
+
 
 class TestWords:
     def test_lists_match_grammar(self):
         assert sorted(lexed('OPERATION')) == sorted(OPERATIONS)
+        assert sorted(lexed('TYPE')) == sorted(TYPES)
 
     @pytest.mark.parametrize('op', OPERATIONS)
     def test_operation(self, op):
@@ -63,3 +66,12 @@ class TestWords:
     def test_word_outside_the_list_fails(self, op):
         with pytest.raises(SyntaxError):
             parse(spec(f'ROOT %Out0 = f32[4] {op}(%In1);'))
+
+    def test_type_outside_the_list_fails(self):
+        with pytest.raises(SyntaxError):
+            parse(spec('ROOT %Out0 = f64[4] convert(%In1);'))
+
+    @pytest.mark.parametrize('typ', TYPES)
+    def test_type(self, typ):
+        tree = parse(spec(f'ROOT %Out0 = {typ}[4] convert(%In1);'))
+        assert tree.instruction(1).result_type().TYPE().getText() == typ

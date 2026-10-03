@@ -30,7 +30,7 @@ ROOT     : 'ROOT' ;
 
 // Types
 // Probably can just use IDENTIFIER
-TYPE     : 's8' | 's32' | 'u8' | 'u32' | 'f32' | 'f16' | 'bf16' ;
+TYPE     : 's8' | 's16' | 's32' | 'u8' | 'u16' | 'u32' | 'f32' | 'f16' | 'bf16' | 'pred' ;
 
 // Operations (from template.py function_templates)
 OPERATION : 'reshape' | 'convert' | 'copy' | 'exp' | 'concatenate' | 'bitcast_convert'
