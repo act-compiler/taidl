@@ -38,6 +38,16 @@ pip install -e .
 
 `tests/pytest.sh` runs the tests in `devanshdvj/act-env:py3.14-jax0.10.2`, the image `docker/act.env` names, in its tag for the host's architecture, amd64 or arm64.
 
+## Grammar
+
+Instruction semantics are parsed by the ANTLR4 grammar `taidl/antlr4/IDLV2.g4`; an operation whose name has several words joins them with underscores, as StableHLO does.
+The lexer, parser, listener and visitor beside it are generated from it and committed with it.
+After editing the grammar, regenerate them with the ANTLR 4.9.2 tool, which matches the runtime pin:
+
+```bash
+ANTLR_JAR=/path/to/antlr-4.9.2-complete.jar ./taidl/antlr4/generate.sh
+```
+
 ## Implementation Details
 
 TAIDL is a pure data model + language parser. It stores:
