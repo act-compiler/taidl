@@ -55,6 +55,10 @@ class TestStrict:
         with pytest.raises(SyntaxError):
             parse(spec(line))
 
+    def test_text_after_module_fails(self):
+        with pytest.raises(SyntaxError):
+            parse(spec('ROOT %Out0 = f32[4] copy(%In0);') + '}')
+
 
 class TestComments:
     def test_comment_skipped(self):

@@ -2,7 +2,7 @@ grammar IDLV2;
 
 // === Parser Rules ===
 
-module          : ENTRY name LBRACE instruction+ RBRACE ;
+module          : ENTRY name LBRACE instruction+ RBRACE EOF ;
 
 instruction     : ROOT? IDENTIFIER EQUAL result_type OPERATION LPAREN operands? RPAREN attributes? SEMICOLON? ;
 
