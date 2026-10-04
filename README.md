@@ -1,6 +1,7 @@
 # TAIDL: Tensor Accelerator ISA Definition Language
 
-TAIDL is a domain-specific language designed to define instruction set architectures (ISAs) for tensor accelerators. It provides a flexible and extensible framework for specifying the operations, data types, and memory models of tensor accelerators.
+TAIDL is a domain-specific language that defines the instruction set architecture (ISA) of a tensor accelerator.
+A spec declares the accelerator's buffers and its instructions, and gives each instruction's meaning as a block of tensor operations.
 
 TAIDL is an integral part of the [ACT Ecosystem](https://github.com/act-compiler/act), enabling automated generation of:
 
