@@ -46,6 +46,7 @@ class Accelerator:
         instruction: str,
         computation_attr: List[str],
         addressing_attr: List[str],
+        *,
         update: Sequence[str] = (),
         constraints: Sequence[str] = (),
     ) -> Instruction:
