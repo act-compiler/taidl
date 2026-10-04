@@ -46,7 +46,6 @@ class Accelerator:
         instruction: str,
         computation_attr: List[str],
         addressing_attr: List[str],
-        cost: str = '0',
         update: Sequence[str] = (),
         constraints: Sequence[str] = (),
     ) -> Instruction:
@@ -55,7 +54,6 @@ class Accelerator:
             computation_attr,
             addressing_attr,
             constraints,
-            cost,
             update,
             self.data_model,
         )

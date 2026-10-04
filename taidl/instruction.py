@@ -28,7 +28,6 @@ class Instruction:
     parameters: List[str]
     constraints: List[str]
     data_models: List[DataModel]
-    cost: str
     update: List[str]
 
     instr_inputs: List[Tuple[str, List[str], List[str]]]
@@ -45,7 +44,6 @@ class Instruction:
         comp_attr: List[str],
         addr_attr: List[str],
         constraints: Sequence[str],
-        cost: str,
         update: Sequence[str],
         data_models: List[DataModel],
     ):
@@ -53,7 +51,6 @@ class Instruction:
         self.comp_attr = strings(instruction, 'computation_attr', comp_attr)
         self.parameters = strings(instruction, 'addressing_attr', addr_attr)
         self.constraints = strings(instruction, 'constraints', constraints)
-        self.cost = cost
         self.update = strings(instruction, 'update', update)
         self.data_models = data_models
         self.instr_inputs = []
