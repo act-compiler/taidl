@@ -40,6 +40,31 @@ class TestFreshLists:
         assert getattr(acc.add_instruction('c', [], ['x']), field) == []
 
 
+class TestInplace:
+    def test_unmarked_by_default(self):
+        assert two_inputs().inplace == [False, False]
+
+    def test_set_inplace(self):
+        instr = two_inputs()
+        instr.set_inplace([False, True])
+        assert instr.inplace == [False, True]
+
+    def test_set_inputs_resets(self):
+        instr = two_inputs()
+        instr.set_inplace([True, True])
+        instr.set_inputs([['d1', ['@a.x'], ['@c.n']]])
+        assert instr.inplace == [False]
+
+    @pytest.mark.parametrize('flags', [[True], [True, False, False]], ids=['short', 'long'])
+    def test_one_flag_per_input(self, flags):
+        with pytest.raises(ValueError, match='t: set_inplace needs one flag per input'):
+            two_inputs().set_inplace(flags)
+
+    def test_before_inputs_fails(self):
+        with pytest.raises(ValueError, match='t: set_inplace needs one flag per input'):
+            make().add_instruction('t', [], ['x']).set_inplace([True])
+
+
 # t's semantics over the given parameters, %Out0 copying %In0
 def semantics(*parameters):
     lines = [f'%In{k} = s8[1,16] parameter({k});' for k in parameters]
