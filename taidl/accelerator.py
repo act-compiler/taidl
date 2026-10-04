@@ -39,6 +39,10 @@ class Accelerator:
     ) -> None:
         self.data_model.append(DataModel(model_name, dimensions, unit_dim, var_type))
 
+    def add_initial_state(self, state_name: str, value: int) -> None:
+        """Declare a machine state variable, @s.<state_name>, with its initial value."""
+        self.state.append(Constant(state_name, value))
+
     def add_instruction(
         self,
         instruction: str,

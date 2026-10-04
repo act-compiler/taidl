@@ -3,7 +3,7 @@
 import re
 
 import pytest
-from taidl import Accelerator
+from taidl import Accelerator, Constant
 
 
 def make():
@@ -173,6 +173,20 @@ class TestNoPartialOverlap(KeepOff):
         instr.set_outputs([['d1', ['@a.x'], ['1']]])
         instr.set_no_partial_overlap([True])
         assert instr.constraints == []
+
+
+class TestInitialState:
+    def test_in_order(self):
+        acc = make()
+        acc.add_initial_state('preload', 0)
+        acc.add_initial_state('fifo_occupancy', 2)
+        assert acc.state == [Constant('preload', 0), Constant('fifo_occupancy', 2)]
+
+    def test_update_kept(self):
+        acc = make()
+        acc.add_initial_state('busy', 0)
+        instr = acc.add_instruction('t', [], ['x'], update=['@s.busy = 1'])
+        assert (acc.state, instr.update) == ([Constant('busy', 0)], ['@s.busy = 1'])
 
 
 # t's semantics over the given parameters, %Out0 copying %In0
