@@ -110,15 +110,13 @@ class Instruction:
 
     def add_semantics(self, semantics: str):
         self.instr_semantics_str = semantics
-        self.instr_semantics_ast = None
-        if semantics and semantics.strip():
-            tree = self.parse_semantics(semantics)
-            # Against the regions given so far, even none
-            if self.inputs_given:
-                self.check_values(tree, 'input', self.instr_inputs)
-            if self.outputs_given:
-                self.check_values(tree, 'output', self.instr_outputs)
-            self.instr_semantics_ast = tree
+        tree = self.parse_semantics(semantics)
+        # Against the regions given so far, even none
+        if self.inputs_given:
+            self.check_values(tree, 'input', self.instr_inputs)
+        if self.outputs_given:
+            self.check_values(tree, 'output', self.instr_outputs)
+        self.instr_semantics_ast = tree
 
     def parse_semantics(self, semantics: str):
         """Parse semantics into AST eagerly to catch syntax errors early"""

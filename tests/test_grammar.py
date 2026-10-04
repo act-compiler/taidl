@@ -85,6 +85,13 @@ class TestStrict:
         with pytest.raises(SyntaxError):
             parse(spec('ROOT %Out0 = f32[4] copy(%In0);') + '}')
 
+    @pytest.mark.parametrize(
+        'text', ['', '  \n', 'ENTRY t {\n}\n'], ids=['empty', 'blank', 'no_line']
+    )
+    def test_semantics_with_no_line_fails(self, text):
+        with pytest.raises(SyntaxError, match='t: semantics line'):
+            parse(text)
+
 
 class TestComments:
     def test_comment_skipped(self):
