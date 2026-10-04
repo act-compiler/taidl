@@ -9,12 +9,12 @@ source act.env
 ARCH=$(uname -m)
 
 if [ "$ARCH" = "x86_64" ]; then
-    IMAGE_NAME="devanshdvj/act:${ACT_DOCKERHUB_TAG}-amd64"
+  IMAGE_NAME="devanshdvj/act:${ACT_DOCKERHUB_TAG}-amd64"
 elif [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then
-    IMAGE_NAME="devanshdvj/act:${ACT_DOCKERHUB_TAG}-arm64"
+  IMAGE_NAME="devanshdvj/act:${ACT_DOCKERHUB_TAG}-arm64"
 else
-    echo "Error: Unsupported architecture: $ARCH"
-    exit 1
+  echo "Error: Unsupported architecture: $ARCH"
+  exit 1
 fi
 
 # collect candidate containers (all containers using the image)
@@ -37,7 +37,7 @@ for line in "${CONTAINERS[@]}"; do
   CINFO=$(echo "$line" | cut -d' ' -f3-)
   read -rp "Remove container ${CNAME} (${CID})? [y/N] " RESP
   case "${RESP}" in
-    y|Y)
+    y | Y)
       echo "Removing ${CNAME}..."
       docker rm -f "${CID}" || { echo "Failed to remove ${CNAME}"; }
       ;;

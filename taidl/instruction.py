@@ -24,8 +24,17 @@ class Instruction:
     instr_semantics_str: str
     instr_semantics_ast: Optional[IDLV2Parser.ModuleContext]
 
-    def __init__(self, instruction: str, comp_attr: List[str], addr_attr: List[str], constraints: List[str], cost: str, update: List[str], data_models: List[DataModel]):
-        self.instruction = instruction.replace(" ", "_")
+    def __init__(
+        self,
+        instruction: str,
+        comp_attr: List[str],
+        addr_attr: List[str],
+        constraints: List[str],
+        cost: str,
+        update: List[str],
+        data_models: List[DataModel],
+    ):
+        self.instruction = instruction.replace(' ', '_')
         self.comp_attr = comp_attr
         self.parameters = addr_attr
         self.constraints = constraints
@@ -34,16 +43,16 @@ class Instruction:
         self.data_models = data_models
         self.instr_inputs = []
         self.instr_outputs = []
-        self.instr_semantics_str = ""
+        self.instr_semantics_str = ''
         self.instr_semantics_ast = None
 
     def find_data_model(self, name: str) -> DataModel:
         for model in self.data_models:
-            if (model.var_name == name):
+            if model.var_name == name:
                 break
         else:
             model = None
-        assert (model != None), f"Data buffer '{name}' not found"
+        assert model != None, f"Data buffer '{name}' not found"
         return model
 
     def set_inputs(self, inputs: List[Tuple[str, List[str], List[str]]]):
@@ -70,5 +79,5 @@ class Instruction:
         return tree
 
     def add_constraints(self, constraints: str):
-        lines = constraints.strip().split("\n")
+        lines = constraints.strip().split('\n')
         self.constraints = [line for line in lines if line.strip()]
