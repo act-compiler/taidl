@@ -34,6 +34,17 @@ def lexed(rule):
     return re.findall(r"'([^']+)'", body)
 
 
+class TestComments:
+    def test_comment_skipped(self):
+        text = '// the copy\n' + spec('// its one line', 'ROOT %Out0 = f32[4] copy(%In1); // done')
+        tree = parse(text)
+        assert [line.OPERATION().getText() for line in tree.instruction()] == ['parameter', 'copy']
+
+    def test_floor_division_stays_in_an_expression(self):
+        tree = parse(spec('ROOT %Out0 = f32[`@c.n // 2`] copy(%In1);'))
+        assert tree.instruction(1).result_type().shape().getText() == '`@c.n // 2`'
+
+
 # The operation words by family
 FAMILIES = {
     'inputs and constants': 'parameter constant iota',
