@@ -67,6 +67,25 @@ class TestFreshLists:
         assert given == [line]
         assert getattr(acc.add_instruction('c', [], ['x']), field) == []
 
+    def test_attribute_lists_copied(self):
+        comp, addr = ['n'], ['x']
+        instr = make().add_instruction('t', comp, addr)
+        comp.append('m')
+        addr.append('y')
+        assert (instr.comp_attr, instr.parameters) == (['n'], ['x'])
+
+    def test_region_and_flag_lists_copied(self):
+        instr = make().add_instruction('t', [], ['x', 'o'])
+        inputs, outputs, flags = [['d1', ['@a.x'], ['1']]], [['d1', ['@a.o'], ['1']]], [True]
+        instr.set_inputs(inputs)
+        instr.set_outputs(outputs)
+        instr.set_inplace(flags)
+        for given in (inputs, outputs, flags):
+            given.clear()
+        assert instr.instr_inputs == [['d1', ['@a.x'], ['1']]]
+        assert instr.instr_outputs == [['d1', ['@a.o'], ['1']]]
+        assert instr.inplace == [True]
+
 
 class TestInplace:
     def test_unmarked_by_default(self):
