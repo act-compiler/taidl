@@ -86,11 +86,19 @@ class TestWords:
 
 
 class TestLiterals:
-    @pytest.mark.parametrize('text', ['-1', '-0', '0.5', '-2.5', '1e-3', '-6.25E+2'])
+    @pytest.mark.parametrize(
+        'text', ['-1', '-0', '0.5', '-2.5', '1e-3', '-6.25E+2', 'inf', '-inf', 'nan']
+    )
     def test_number_operand(self, text):
         tree = parse(spec(f'ROOT %Out0 = f32[1] constant({text});'))
         value = tree.instruction(1).operands().operand(0).value()
         assert value.NUMBER().getText() == text
+
+    @pytest.mark.parametrize('text', ['info', 'nano', 'inf_x', '%inf'])
+    def test_longer_word_stays_identifier(self, text):
+        tree = parse(spec(f'ROOT %Out0 = f32[1] constant({text});'))
+        value = tree.instruction(1).operands().operand(0).value()
+        assert value.IDENTIFIER().getText() == text
 
     def test_integer_stays_int(self):
         tree = parse(spec('ROOT %Out0 = s32[1] constant(7);'))
