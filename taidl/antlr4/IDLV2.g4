@@ -28,16 +28,15 @@ value : INT | IDENTIFIER | EXPRESSION;
 ENTRY    : 'ENTRY' ;
 ROOT     : 'ROOT' ;
 
-// Types
-// Probably can just use IDENTIFIER
+// Element types, spelled as XLA-HLO text spells them
 TYPE     : 's8' | 's16' | 's32' | 'u8' | 'u16' | 'u32' | 'f32' | 'f16' | 'bf16' | 'pred' ;
 
-// Operations (from template.py function_templates)
+// Operations as XLA-HLO names them; reduce_<reducer> is TAIDL's own
 OPERATION : 'reshape' | 'convert' | 'copy' | 'concatenate' | 'bitcast_convert'
           | 'transpose' | 'slice' | 'dot' | 'constant' | 'broadcast' | 'maximum'
           | 'minimum' | 'xor' | 'add'
           | 'dynamic_update_slice' | 'subtract' | 'multiply' | 'divide'
-          | 'parameter' | 'reduce_add' | 'exponential' // parameter is special operation for inputs
+          | 'parameter' | 'reduce_add' | 'exponential'
           | 'reduce_max' | 'reduce_min' | 'reduce_and' | 'reduce_or' | 'gather' | 'iota'
           | 'abs' | 'negate' | 'sign' | 'sqrt' | 'rsqrt' | 'log' | 'log_plus_one' | 'logistic'
           | 'tanh' | 'sine' | 'round_nearest_even' | 'power' | 'clamp' | 'compare' | 'select'
