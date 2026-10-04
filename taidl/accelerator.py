@@ -22,14 +22,14 @@ class Accelerator:
         self.instructions = []
         self.state = []
         self.data_model = []
-        if base_dir is not None:
-            self.base_dir = base_dir
-        else:
-            caller_file = inspect.stack()[1].filename
+        if base_dir is None:
+            # The directory of the file that creates the accelerator
+            caller_file = inspect.currentframe().f_back.f_code.co_filename
             if os.path.exists(caller_file):
-                self.base_dir = os.path.dirname(os.path.abspath(caller_file))
+                base_dir = os.path.dirname(os.path.abspath(caller_file))
             else:
-                self.base_dir = os.getcwd()
+                base_dir = os.getcwd()
+        self.base_dir = base_dir
         self.add_data_model('d0', [], [], 'u8')
 
     def add_data_model(
