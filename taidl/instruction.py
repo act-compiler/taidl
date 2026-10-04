@@ -70,8 +70,9 @@ class Instruction:
         self.instruction = name
         self.comp_attr = strings(name, 'computation_attr', comp_attr)
         self.parameters = strings(name, 'addressing_attr', addr_attr)
-        for attr in self.comp_attr + self.parameters:
-            check_name(f'{name}: attribute', attr)
+        attrs = self.comp_attr + self.parameters
+        for position, attr in enumerate(attrs):
+            check_name(f'{name}: attribute', attr, taken=attrs[:position])
         # The accelerator's state, complete before any instruction
         self.state = state
         self.constraints, self.constraint_asts = [], []

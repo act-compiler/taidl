@@ -37,7 +37,7 @@ class Accelerator:
     def add_data_model(
         self, name: str, dimensions: List[int], unit_dim: List[int], var_type: str
     ) -> None:
-        check_name('data model', name)
+        check_name('data model', name, taken=[model.var_name for model in self.data_model])
         self.data_model.append(DataModel(name, dimensions, unit_dim, var_type))
 
     def add_initial_state(self, name: str, value: int) -> None:
@@ -48,7 +48,7 @@ class Accelerator:
                 f"state '{name}' follows an instruction: "
                 'state is declared with the data models, before the instructions'
             )
-        check_name('state', name)
+        check_name('state', name, taken=[state.name for state in self.state])
         self.state.append(State(name, value))
 
     def add_instruction(
@@ -60,7 +60,7 @@ class Accelerator:
         update: Sequence[str] = (),
         constraints: Sequence[str] = (),
     ) -> Instruction:
-        check_name('instruction', name)
+        check_name('instruction', name, taken=[instr.instruction for instr in self.instructions])
         new_instruction = Instruction(
             name,
             computation_attr,

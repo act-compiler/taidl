@@ -23,11 +23,9 @@ from taidl.operations import (
 GRAMMAR = os.path.join(os.path.dirname(taidl.antlr4.__file__), 'IDLV2.g4')
 DOCS = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'docs')
 
-acc = Accelerator('Grammar')
-
 
 def parse(semantics):
-    instr = acc.add_instruction('t', ['n'], [])
+    instr = Accelerator('Grammar', base_dir='.').add_instruction('t', ['n'], [])
     instr.add_semantics(semantics)
     return instr.instr_semantics_ast
 
