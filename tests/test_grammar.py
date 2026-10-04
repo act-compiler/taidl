@@ -81,6 +81,19 @@ class TestStrict:
         # The error is raised, never printed
         assert capsys.readouterr() == ('', '')
 
+    @pytest.mark.parametrize(
+        'line',
+        [
+            'ROOT %Out0 = s32[] constant(@c.n);',
+            'ROOT %Out0 = f32[4] broadcast(%In0), dimensions={@c.n};',
+            'ROOT %Out0 = f32[4] copy(%In0), n=@s.mode;',
+        ],
+        ids=['operand', 'brace_list', 'attribute'],
+    )
+    def test_reference_outside_backticks_fails(self, line):
+        with pytest.raises(SyntaxError, match='t: semantics line 3, column .*@'):
+            parse(spec(line))
+
     def test_text_after_module_fails(self):
         with pytest.raises(SyntaxError):
             parse(spec('ROOT %Out0 = f32[4] copy(%In0);') + '}')
