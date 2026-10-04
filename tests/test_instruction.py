@@ -19,6 +19,14 @@ def two_inputs():
     return instr
 
 
+class TestConstraints:
+    def test_add_constraints_appends(self):
+        instr = make().add_instruction('t', ['n'], ['x'], constraints=['@c.n <= 4'])
+        instr.add_constraints('@a.x >= 0\n\n@a.x < 64')
+        instr.add_constraints('@c.n >= 1')
+        assert instr.constraints == ['@c.n <= 4', '@a.x >= 0', '@a.x < 64', '@c.n >= 1']
+
+
 # t's semantics over the given parameters, %Out0 copying %In0
 def semantics(*parameters):
     lines = [f'%In{k} = s8[1,16] parameter({k});' for k in parameters]

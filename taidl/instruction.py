@@ -185,4 +185,4 @@ class Instruction:
 
     def add_constraints(self, constraints: str):
         lines = constraints.strip().split('\n')
-        self.constraints = [line for line in lines if line.strip()]
+        self.constraints = self.constraints + [line for line in lines if line.strip()]
