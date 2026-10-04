@@ -88,11 +88,8 @@ class Instruction:
     def find_data_model(self, name: str) -> DataModel:
         for model in self.data_models:
             if model.var_name == name:
-                break
-        else:
-            model = None
-        assert model != None, f"Data buffer '{name}' not found"
-        return model
+                return model
+        raise ValueError(f"{self.instruction}: no data model is named '{name}'")
 
     def set_inputs(self, inputs: List[Tuple[str, List[str], List[str]]]):
         trees = self.parse_regions(inputs)

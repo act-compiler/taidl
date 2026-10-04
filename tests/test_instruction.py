@@ -88,6 +88,17 @@ class TestFreshLists:
         assert instr.inplace == [True]
 
 
+class TestBuffers:
+    def test_find_data_model(self):
+        instr = make().add_instruction('t', [], ['x'])
+        assert instr.find_data_model('d1').var_name == 'd1'
+
+    def test_undeclared_buffer_fails(self):
+        instr = make().add_instruction('t', [], ['x'])
+        with pytest.raises(ValueError, match="t: no data model is named 'd9'"):
+            instr.find_data_model('d9')
+
+
 class TestInplace:
     def test_unmarked_by_default(self):
         assert two_inputs().inplace == [False, False]
