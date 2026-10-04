@@ -1,9 +1,15 @@
 """Tests for the instruction API"""
 
+import inspect
+import os
 import re
+import runpy
 
 import pytest
-from taidl import Accelerator, State
+from taidl import Accelerator, Instruction, State
+
+README = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'README.md')
+DOCS = os.path.join(os.path.dirname(README), 'docs')
 
 
 def make():
@@ -438,3 +444,54 @@ class TestValues:
         getattr(instr, f'set_{kind}')([])
         with pytest.raises(SyntaxError, match=re.escape(f't: semantics {message}')):
             instr.add_semantics(semantics(0))
+
+
+# The calls a spec makes
+API = [
+    Accelerator,
+    Accelerator.add_data_model,
+    Accelerator.add_initial_state,
+    Accelerator.add_instruction,
+    Instruction.set_inputs,
+    Instruction.set_outputs,
+    Instruction.set_inplace,
+    Instruction.set_apart,
+    Instruction.set_no_partial_overlap,
+    Instruction.add_semantics,
+    Instruction.add_constraints,
+]
+
+
+def written(function):
+    """A call's parameters the way the docs write them."""
+    parts = []
+    for param in inspect.signature(function).parameters.values():
+        if param.name == 'self':
+            continue
+        if param.kind is param.KEYWORD_ONLY and '*' not in parts:
+            parts.append('*')
+        default = '' if param.default is param.empty else f'={param.default!r}'
+        parts.append(param.name + default)
+    return ', '.join(parts)
+
+
+class TestDocs:
+    @pytest.mark.parametrize('function', API, ids=lambda function: function.__name__)
+    def test_docs_signature_matches_code(self, function):
+        # Each `call(parameters)` the docs write, a () default included
+        text = ''
+        for name in sorted(os.listdir(DOCS)):
+            with open(os.path.join(DOCS, name)) as file:
+                text += file.read()
+        signatures = dict(re.findall(r'`(\w+)\(([^`)]*(?:\(\)[^`)]*)*)\)`', text))
+        assert signatures[function.__name__] == written(function)
+
+    def test_example_runs(self, tmp_path):
+        with open(README) as file:
+            example = re.search(r'```python\n(.*?)```', file.read(), re.DOTALL).group(1)
+        spec = tmp_path / 'demo.py'
+        spec.write_text(example)
+        acc = runpy.run_path(str(spec))['acc']
+        assert [model.var_name for model in acc.data_model] == ['d0', 'd1']
+        assert [instr.instruction for instr in acc.instructions] == ['load']
+        assert acc.base_dir == str(tmp_path)

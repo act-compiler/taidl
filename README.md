@@ -40,8 +40,33 @@ pip install -e .
 
 ## Specs
 
+A spec is a Python program that builds an `Accelerator`: its data models, then its instructions.
+
+```python
+from taidl import Accelerator
+
+acc = Accelerator('Demo')
+
+# d1: 128 rows of 64 bf16 values
+acc.add_data_model('d1', [128], [64], 'bf16')
+
+# load: n rows from the off-chip memory into d1
+instr = acc.add_instruction('load', ['n'], ['addr_in', 'addr_out'])
+instr.set_inputs([['d0', ['@a.addr_in'], ['@c.n * 128']]])
+instr.set_outputs([['d1', ['@a.addr_out'], ['@c.n']]])
+instr.add_semantics("""
+ENTRY {
+    %In0 = u8[`@c.n * 128`] parameter(0);
+    %a = u8[`@c.n`,64,2] reshape(%In0);
+    ROOT %Out0 = bf16[`@c.n`,64] bitcast_convert(%a);
+}
+""")
+```
+
 The language is documented under `docs/`:
 
+- `docs/declarations.md`: the accelerator, its data models, its regions and the names a spec gives
+- `docs/instructions.md`: an instruction, its attributes, constraints, in-place and placement marks, and machine state
 - `docs/semantics.md`: the text of a semantics, its types, shapes, operands and attributes, and what is refused
 - `docs/expressions.md`: expressions, constraints and state updates
 - `docs/operations.md`: the operation words, what each takes, and the operations that stay out
