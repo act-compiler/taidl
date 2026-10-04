@@ -55,6 +55,32 @@ class TestStrict:
         with pytest.raises(SyntaxError):
             parse(spec(line))
 
+    @pytest.mark.parametrize(
+        'text, where',
+        [
+            ('$' + spec(COPY), 'line 1, column 1'),
+            (spec('ROOT %Out0 = f32[4] add(%In0, -%In0);'), 'line 3, column 35'),
+            (
+                spec('%a = f32[`@c.n *\n 2`] copy(%In0);', 'ROOT %Out0 = f32[4] copy($);'),
+                'line 5, column 30',
+            ),
+            (spec(COPY) + '$', 'line 5, column 1'),
+            (spec(COPY)[:-2], 'line 4, column 1'),
+        ],
+        ids=[
+            'first_character',
+            'mid_line',
+            'after_a_two_line_expression',
+            'after_the_module',
+            'end_of_text',
+        ],
+    )
+    def test_error_names_line_and_column(self, text, where, capsys):
+        with pytest.raises(SyntaxError, match=f't: semantics {where}: '):
+            parse(text)
+        # The error is raised, never printed
+        assert capsys.readouterr() == ('', '')
+
     def test_text_after_module_fails(self):
         with pytest.raises(SyntaxError):
             parse(spec('ROOT %Out0 = f32[4] copy(%In0);') + '}')
@@ -204,7 +230,8 @@ class TestWords:
         'typ', ['c64', 'f8e4m3', 'f8e5m2fnuz'], ids=['unlisted', 'shorter_name', 'longer_name']
     )
     def test_type_outside_the_list_fails(self, typ):
-        with pytest.raises(SyntaxError):
+        # The whole word is refused, where it starts
+        with pytest.raises(SyntaxError, match='t: semantics line 3, column 18: '):
             parse(spec(f'ROOT %Out0 = {typ}[4] convert(%In0);'))
 
     @pytest.mark.parametrize('typ', TYPES)
