@@ -16,7 +16,7 @@ class Accelerator:
     instructions: List[Instruction]
     base_dir: str
 
-    def __init__(self, name: str, base_dir: str = None):
+    def __init__(self, name: str, base_dir: str | None = None):
         check_name('accelerator', name)
         self.name = name
         self.instructions = []
