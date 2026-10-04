@@ -12,7 +12,6 @@ from .instruction import Instruction
 @dataclass
 class Accelerator:
     name: str
-    constants: List[Constant]
     data_model: List[DataModel]
     state: List[Constant]
     instructions: List[Instruction] = field(init=False)
@@ -20,7 +19,6 @@ class Accelerator:
 
     def __init__(self, name: str, base_dir: str = None):
         self.name = name.replace(' ', '_')
-        self.constants = []
         self.instructions = []
         self.state = []
         self.data_model = []
