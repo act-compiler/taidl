@@ -2,7 +2,6 @@
 
 import os
 import inspect
-from dataclasses import dataclass, field
 from typing import List, Sequence
 
 from .data_model import TYPES, DataModel, State
@@ -10,13 +9,12 @@ from .instruction import Instruction
 from .names import check_name
 
 
-@dataclass
 class Accelerator:
     name: str
     data_model: List[DataModel]
     state: List[State]
-    instructions: List[Instruction] = field(init=False)
-    base_dir: str = field(init=False)
+    instructions: List[Instruction]
+    base_dir: str
 
     def __init__(self, name: str, base_dir: str = None):
         check_name('accelerator', name)

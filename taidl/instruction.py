@@ -1,7 +1,6 @@
 """Instruction set definitions for TAIDLv2"""
 
 import re
-from dataclasses import dataclass
 from typing import List, Optional, Sequence, Tuple
 
 from antlr4 import CommonTokenStream, InputStream
@@ -33,7 +32,6 @@ class SyntaxErrors(ErrorListener):
         self.found.append((line, column + 1, msg))
 
 
-@dataclass
 class Instruction:
     instruction: str
     comp_attr: List[str]
