@@ -22,9 +22,26 @@ def two_inputs():
 class TestConstraints:
     def test_add_constraints_appends(self):
         instr = make().add_instruction('t', ['n'], ['x'], constraints=['@c.n <= 4'])
-        instr.add_constraints('@a.x >= 0\n\n@a.x < 64')
-        instr.add_constraints('@c.n >= 1')
+        instr.add_constraints(['@a.x >= 0', '@a.x < 64'])
+        instr.add_constraints(['@c.n >= 1'])
         assert instr.constraints == ['@c.n <= 4', '@a.x >= 0', '@a.x < 64', '@c.n >= 1']
+
+
+class TestStringLists:
+    @pytest.mark.parametrize(
+        'what', ['computation_attr', 'addressing_attr', 'update', 'constraints']
+    )
+    def test_add_instruction_refuses_one_string(self, what):
+        given = {'computation_attr': [], 'addressing_attr': [], what: 'n'}
+        message = f't: {what} takes a list of strings, not one string'
+        with pytest.raises(TypeError, match=message):
+            make().add_instruction('t', **given)
+
+    def test_add_constraints_refuses_one_string(self):
+        instr = make().add_instruction('t', [], ['x'])
+        message = 't: add_constraints takes a list of strings, not one string'
+        with pytest.raises(TypeError, match=message):
+            instr.add_constraints('@a.x >= 0')
 
 
 class TestFreshLists:
