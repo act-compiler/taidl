@@ -7,6 +7,7 @@ from typing import List, Sequence
 
 from .data_model import DataModel, State
 from .instruction import Instruction
+from .names import check_name
 
 
 @dataclass
@@ -18,7 +19,8 @@ class Accelerator:
     base_dir: str = field(init=False)
 
     def __init__(self, name: str, base_dir: str = None):
-        self.name = name.replace(' ', '_')
+        check_name('accelerator', name)
+        self.name = name
         self.instructions = []
         self.state = []
         self.data_model = []
@@ -35,6 +37,7 @@ class Accelerator:
     def add_data_model(
         self, name: str, dimensions: List[int], unit_dim: List[int], var_type: str
     ) -> None:
+        check_name('data model', name)
         self.data_model.append(DataModel(name, dimensions, unit_dim, var_type))
 
     def add_initial_state(self, name: str, value: int) -> None:
@@ -45,6 +48,7 @@ class Accelerator:
                 f"state '{name}' follows an instruction: "
                 'state is declared with the data models, before the instructions'
             )
+        check_name('state', name)
         self.state.append(State(name, value))
 
     def add_instruction(
@@ -56,6 +60,7 @@ class Accelerator:
         update: Sequence[str] = (),
         constraints: Sequence[str] = (),
     ) -> Instruction:
+        check_name('instruction', name)
         new_instruction = Instruction(
             name,
             computation_attr,

@@ -19,6 +19,38 @@ def two_inputs():
     return instr
 
 
+# Each kind of name's declaration, keyed by its refusal's prefix
+GIVE = {
+    'accelerator': lambda name: Accelerator(name, base_dir='.'),
+    'data model': lambda name: make().add_data_model(name, [4], [4], 's8'),
+    'state': lambda name: make().add_initial_state(name, 0),
+    'instruction': lambda name: make().add_instruction(name, [], []),
+    't: attribute': lambda name: make().add_instruction('t', [name], []),
+    'u: attribute': lambda name: make().add_instruction('u', [], [name]),
+}
+
+
+@pytest.mark.parametrize('kind', list(GIVE))
+class TestNames:
+    def test_identifier_accepted(self, kind):
+        GIVE[kind]('load_rm2')
+
+    @pytest.mark.parametrize('name', ['load rm', '2x', '', 'caf\u00e9'])
+    def test_not_an_identifier_refused(self, kind, name):
+        with pytest.raises(ValueError, match=f"{kind} name '{name}' is not an identifier"):
+            GIVE[kind](name)
+
+    @pytest.mark.parametrize('name', [1, None])
+    def test_not_a_string_refused(self, kind, name):
+        with pytest.raises(ValueError, match=f'{kind} name {name} is not an identifier'):
+            GIVE[kind](name)
+
+    @pytest.mark.parametrize('name', ['and', 'None'])
+    def test_python_keyword_refused(self, kind, name):
+        with pytest.raises(ValueError, match=f"{kind} name '{name}' is a Python keyword"):
+            GIVE[kind](name)
+
+
 class TestParameterNames:
     def test_every_parameter_by_keyword(self):
         acc = Accelerator(name='Instr', base_dir='.')

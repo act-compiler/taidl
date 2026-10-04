@@ -12,6 +12,7 @@ from antlr4.tree.Trees import Trees
 
 from .data_model import DataModel, State
 from .antlr4 import IDLV2ExprLexer, IDLV2ExprParser, IDLV2Lexer, IDLV2Parser
+from .names import check_name
 from .operations import check_operations
 
 # Start or size: integer, or expression over attributes and state
@@ -66,9 +67,11 @@ class Instruction:
         data_models: List[DataModel],
         state: list[State],
     ):
-        self.instruction = name.replace(' ', '_')
+        self.instruction = name
         self.comp_attr = strings(name, 'computation_attr', comp_attr)
         self.parameters = strings(name, 'addressing_attr', addr_attr)
+        for attr in self.comp_attr + self.parameters:
+            check_name(f'{name}: attribute', attr)
         # The accelerator's state, complete before any instruction
         self.state = state
         self.constraints, self.constraint_asts = [], []
