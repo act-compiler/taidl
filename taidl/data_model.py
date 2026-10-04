@@ -1,7 +1,6 @@
 """Data model definitions for TAIDLv2"""
 
 from dataclasses import dataclass
-from typing import List
 
 # The element types, as the grammar's TYPE rule lexes them
 TYPES = (
@@ -35,14 +34,14 @@ class State:
 
 class DataModel:
     var_name: str
-    var_dim: List[int]
-    access_dim: List[int]
-    unit_dim: List[int]
+    var_dim: list[int]
+    access_dim: list[int]
+    unit_dim: list[int]
     var_type: str
     array_dim_str: str
     num_dim_str: str
 
-    def __init__(self, var_name: str, access_dim: List[int], unit_dim: List[int], var_type: str):
+    def __init__(self, var_name: str, access_dim: list[int], unit_dim: list[int], var_type: str):
         self.var_name = var_name
         # Lists of its own, whatever sequence it is given
         self.access_dim = list(access_dim)

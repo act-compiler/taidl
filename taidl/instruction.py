@@ -1,7 +1,7 @@
 """Instruction set definitions for TAIDLv2"""
 
 import re
-from typing import List, Optional, Sequence
+from collections.abc import Sequence
 
 from antlr4 import CommonTokenStream, InputStream
 from antlr4.error.ErrorListener import ErrorListener
@@ -9,8 +9,8 @@ from antlr4.Token import CommonToken
 from antlr4.tree.Tree import TerminalNode
 from antlr4.tree.Trees import Trees
 
-from .data_model import DataModel, State
 from .antlr4 import IDLV2ExprLexer, IDLV2ExprParser, IDLV2Lexer, IDLV2Parser
+from .data_model import DataModel, State
 from .names import check_name
 from .operations import check_operations
 
@@ -34,23 +34,23 @@ class SyntaxErrors(ErrorListener):
 
 class Instruction:
     instruction: str
-    comp_attr: List[str]
-    parameters: List[str]
-    constraints: List[str]
-    data_models: List[DataModel]
+    comp_attr: list[str]
+    parameters: list[str]
+    constraints: list[str]
+    data_models: list[DataModel]
     state: list[State]
-    update: List[str]
+    update: list[str]
 
     instr_inputs: list[Region]
     instr_outputs: list[Region]
-    instr_semantics_ast: Optional[IDLV2Parser.ModuleContext]
+    instr_semantics_ast: IDLV2Parser.ModuleContext | None
     # Each text above parsed, beside it
     constraint_asts: list[IDLV2ExprParser.ConditionContext]
     update_asts: list[IDLV2ExprParser.UpdateContext]
     instr_input_asts: list[RegionTrees]
     instr_output_asts: list[RegionTrees]
     instr_expression_asts: dict[TerminalNode, IDLV2ExprParser.ExpressionContext]
-    inplace: List[bool]
+    inplace: list[bool]
     # Each placement mark's flags, by its method's name
     marks: dict[str, list[bool]]
     # The trees of the constraints each placement mark appended
@@ -61,11 +61,11 @@ class Instruction:
     def __init__(
         self,
         name: str,
-        comp_attr: List[str],
-        addr_attr: List[str],
+        comp_attr: list[str],
+        addr_attr: list[str],
         constraints: Sequence[str],
         update: Sequence[str],
-        data_models: List[DataModel],
+        data_models: list[DataModel],
         state: list[State],
     ):
         self.instruction = name
@@ -162,7 +162,7 @@ class Instruction:
                     f"'{value.text}' has no {kind} region, set_{kind}s gave {len(regions)}"
                 )
 
-    def set_inplace(self, inplace: List[bool]):
+    def set_inplace(self, inplace: list[bool]):
         """Mark the inputs this instruction overwrites, one flag per input; set_inputs resets them."""
         if len(inplace) != len(self.instr_inputs):
             raise ValueError(f'{self.instruction}: set_inplace needs one flag per input')
@@ -173,7 +173,7 @@ class Instruction:
                 )
         self.inplace = list(inplace)
 
-    def set_apart(self, apart: List[bool]):
+    def set_apart(self, apart: list[bool]):
         """Mark the inputs the output never overlaps, one flag per input.
 
         Each marked input adds one constraint: the output lies apart from it along
@@ -181,7 +181,7 @@ class Instruction:
         """
         self.keep_off('set_apart', apart, whole=False)
 
-    def set_no_partial_overlap(self, no_partial: List[bool]):
+    def set_no_partial_overlap(self, no_partial: list[bool]):
         """Mark the inputs the output shares its starts with or lies apart from, one flag per input.
 
         Each marked input adds one constraint per addressed dimension whose starts are
@@ -189,7 +189,7 @@ class Instruction:
         """
         self.keep_off('set_no_partial_overlap', no_partial, whole=True)
 
-    def keep_off(self, method: str, flags: List[bool], whole: bool):
+    def keep_off(self, method: str, flags: list[bool], whole: bool):
         """Keep the output apart from each flagged input, or sharing its starts if `whole`."""
         name = self.instruction
         if len(self.instr_outputs) != 1:
@@ -406,7 +406,7 @@ def parse(lexer_class, parser_class, rule: str, text: str):
     return getattr(parser, rule)(), errors.found
 
 
-def strings(instruction: str, what: str, given: Sequence[str]) -> List[str]:
+def strings(instruction: str, what: str, given: Sequence[str]) -> list[str]:
     """A copy of a list of strings; one bare string is refused."""
     if isinstance(given, str):
         raise TypeError(f'{instruction}: {what} takes a list of strings, not one string')

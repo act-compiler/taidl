@@ -3,7 +3,7 @@
 __version__ = '2.11'
 
 from .accelerator import Accelerator
-from .instruction import Instruction
 from .data_model import DataModel, State
+from .instruction import Instruction
 
-__all__ = ['Accelerator', 'Instruction', 'DataModel', 'State']
+__all__ = ['Accelerator', 'DataModel', 'Instruction', 'State']
