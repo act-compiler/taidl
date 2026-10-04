@@ -3,6 +3,29 @@
 from dataclasses import dataclass, field
 from typing import List
 
+# The element types, as the grammar's TYPE rule lexes them
+TYPES = (
+    'pred',
+    's2',
+    's4',
+    's8',
+    's16',
+    's32',
+    's64',
+    'u2',
+    'u4',
+    'u8',
+    'u16',
+    'u32',
+    'u64',
+    'f8e4m3fn',
+    'f8e5m2',
+    'f16',
+    'bf16',
+    'f32',
+    'f64',
+)
+
 
 @dataclass
 class State:

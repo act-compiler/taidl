@@ -5,7 +5,7 @@ import inspect
 from dataclasses import dataclass, field
 from typing import List, Sequence
 
-from .data_model import DataModel, State
+from .data_model import TYPES, DataModel, State
 from .instruction import Instruction
 from .names import check_name
 
@@ -38,6 +38,8 @@ class Accelerator:
         self, name: str, dimensions: List[int], unit_dim: List[int], var_type: str
     ) -> None:
         check_name('data model', name, taken=[model.var_name for model in self.data_model])
+        if var_type not in TYPES:
+            raise ValueError(f"{name}: type '{var_type}' is not one of {', '.join(TYPES)}")
         self.data_model.append(DataModel(name, dimensions, unit_dim, var_type))
 
     def add_initial_state(self, name: str, value: int) -> None:
