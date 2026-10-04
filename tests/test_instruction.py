@@ -98,6 +98,12 @@ class TestBuffers:
         with pytest.raises(ValueError, match="t: no data model is named 'd9'"):
             instr.find_data_model('d9')
 
+    @pytest.mark.parametrize('setter', ['set_inputs', 'set_outputs'])
+    def test_undeclared_buffer_refused(self, setter):
+        instr = make().add_instruction('t', [], ['x'])
+        with pytest.raises(ValueError, match="t: no data model is named 'd9'"):
+            getattr(instr, setter)([['d9', ['@a.x'], ['1']]])
+
 
 class TestInplace:
     def test_unmarked_by_default(self):
