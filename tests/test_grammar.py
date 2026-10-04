@@ -38,14 +38,14 @@ def lexed(rule):
 FAMILIES = {
     'inputs and constants': 'parameter constant iota',
     'elementwise arithmetic': 'abs negate sign add subtract multiply divide maximum minimum power'
-    ' sqrt rsqrt exp exponential log log_plus_one logistic tanh sine round_nearest_even',
+    ' sqrt rsqrt exponential log log_plus_one logistic tanh sine round_nearest_even',
     'logic and shifts': 'and or xor shift_left shift_right_logical shift_right_arithmetic',
-    'comparison and selection': 'compare select select_lt select_eq_var clamp',
+    'comparison and selection': 'compare select clamp',
     'type conversion': 'convert bitcast_convert',
     'shape and movement': 'reshape transpose broadcast concatenate slice dynamic_update_slice'
     ' gather copy',
     'contraction': 'dot',
-    'reduction': 'reduce reduce_add reduce_max reduce_min reduce_and reduce_or',
+    'reduction': 'reduce_add reduce_max reduce_min reduce_and reduce_or',
 }
 OPERATIONS = ' '.join(FAMILIES.values()).split()
 
