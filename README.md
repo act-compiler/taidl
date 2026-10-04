@@ -81,14 +81,3 @@ After editing a grammar, regenerate them with the ANTLR 4.9.2 tool, which matche
 ```bash
 ANTLR_JAR=/path/to/antlr-4.9.2-complete.jar ./taidl/antlr4/generate.sh
 ```
-
-## Implementation Details
-
-TAIDL is a pure data model + language parser. It stores:
-
-- Accelerator metadata (name, state)
-- Data model definitions (memory spaces with dimensions and types)
-- Instruction definitions (parameters, constraints, inputs/outputs)
-- Parsed semantics AST (ANTLR4 parse tree)
-
-Generators (TAIDL-TO, ACT-Backend) consume the `Accelerator` object and its pre-parsed ASTs to produce target-specific software tools.
