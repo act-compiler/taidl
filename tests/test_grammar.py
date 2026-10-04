@@ -119,12 +119,13 @@ class TestLiterals:
 
     def test_number_attribute(self):
         tree = parse(spec('ROOT %Out0 = f32[4] power(%In1), exponent=-0.5;'))
-        value = tree.instruction(1).attributes().attribute(0).attributeValue().value()
+        value = tree.instruction(1).attributes().attribute(0).attribute_value().value()
         assert value.NUMBER().getText() == '-0.5'
 
     def test_number_brace_list(self):
         tree = parse(spec('ROOT %Out0 = f32[4] constant(), values={-1, 0.5, 2};'))
-        values = tree.instruction(1).attributes().attribute(0).attributeValue().braceList().value()
+        attribute = tree.instruction(1).attributes().attribute(0)
+        values = attribute.attribute_value().brace_list().value()
         assert [v.getText() for v in values] == ['-1', '0.5', '2']
         assert [v.NUMBER() is not None for v in values] == [True, True, False]
 
@@ -172,4 +173,4 @@ class TestAttributes:
         tree = parse(spec('ROOT %Out0 = f32[2] slice(%In1), slice={[0:4:2]};'))
         attribute = tree.instruction(1).attributes().attribute(0)
         assert attribute.name().getText() == 'slice'
-        assert attribute.attributeValue().sliceList().getText() == '{[0:4:2]}'
+        assert attribute.attribute_value().slice_list().getText() == '{[0:4:2]}'

@@ -71,30 +71,30 @@ class IDLV2Listener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by IDLV2Parser#attributeValue.
-    def enterAttributeValue(self, ctx:IDLV2Parser.AttributeValueContext):
+    # Enter a parse tree produced by IDLV2Parser#attribute_value.
+    def enterAttribute_value(self, ctx:IDLV2Parser.Attribute_valueContext):
         pass
 
-    # Exit a parse tree produced by IDLV2Parser#attributeValue.
-    def exitAttributeValue(self, ctx:IDLV2Parser.AttributeValueContext):
-        pass
-
-
-    # Enter a parse tree produced by IDLV2Parser#braceList.
-    def enterBraceList(self, ctx:IDLV2Parser.BraceListContext):
-        pass
-
-    # Exit a parse tree produced by IDLV2Parser#braceList.
-    def exitBraceList(self, ctx:IDLV2Parser.BraceListContext):
+    # Exit a parse tree produced by IDLV2Parser#attribute_value.
+    def exitAttribute_value(self, ctx:IDLV2Parser.Attribute_valueContext):
         pass
 
 
-    # Enter a parse tree produced by IDLV2Parser#sliceList.
-    def enterSliceList(self, ctx:IDLV2Parser.SliceListContext):
+    # Enter a parse tree produced by IDLV2Parser#brace_list.
+    def enterBrace_list(self, ctx:IDLV2Parser.Brace_listContext):
         pass
 
-    # Exit a parse tree produced by IDLV2Parser#sliceList.
-    def exitSliceList(self, ctx:IDLV2Parser.SliceListContext):
+    # Exit a parse tree produced by IDLV2Parser#brace_list.
+    def exitBrace_list(self, ctx:IDLV2Parser.Brace_listContext):
+        pass
+
+
+    # Enter a parse tree produced by IDLV2Parser#slice_list.
+    def enterSlice_list(self, ctx:IDLV2Parser.Slice_listContext):
+        pass
+
+    # Exit a parse tree produced by IDLV2Parser#slice_list.
+    def exitSlice_list(self, ctx:IDLV2Parser.Slice_listContext):
         pass
 
 

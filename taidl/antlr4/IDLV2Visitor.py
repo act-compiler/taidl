@@ -44,18 +44,18 @@ class IDLV2Visitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by IDLV2Parser#attributeValue.
-    def visitAttributeValue(self, ctx:IDLV2Parser.AttributeValueContext):
+    # Visit a parse tree produced by IDLV2Parser#attribute_value.
+    def visitAttribute_value(self, ctx:IDLV2Parser.Attribute_valueContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by IDLV2Parser#braceList.
-    def visitBraceList(self, ctx:IDLV2Parser.BraceListContext):
+    # Visit a parse tree produced by IDLV2Parser#brace_list.
+    def visitBrace_list(self, ctx:IDLV2Parser.Brace_listContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by IDLV2Parser#sliceList.
-    def visitSliceList(self, ctx:IDLV2Parser.SliceListContext):
+    # Visit a parse tree produced by IDLV2Parser#slice_list.
+    def visitSlice_list(self, ctx:IDLV2Parser.Slice_listContext):
         return self.visitChildren(ctx)
 
 

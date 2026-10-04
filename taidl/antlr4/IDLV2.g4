@@ -2,28 +2,28 @@ grammar IDLV2;
 
 // === Parser Rules ===
 
-module         : ENTRY name LBRACE instruction+ RBRACE ;
+module          : ENTRY name LBRACE instruction+ RBRACE ;
 
-instruction    : ROOT? IDENTIFIER EQUAL result_type OPERATION LPAREN operands? RPAREN attributes? SEMICOLON? ;
+instruction     : ROOT? IDENTIFIER EQUAL result_type OPERATION LPAREN operands? RPAREN attributes? SEMICOLON? ;
 
-result_type    : TYPE LBRACKET shape? RBRACKET ;
+result_type     : TYPE LBRACKET shape? RBRACKET ;
 
-operands       : operand (COMMA operand)* ;
-operand        : value ;
+operands        : operand (COMMA operand)* ;
+operand         : value ;
 
-attributes     : COMMA attribute (COMMA attribute)* ;
-attribute      : name EQUAL attributeValue ;
+attributes      : COMMA attribute (COMMA attribute)* ;
+attribute       : name EQUAL attribute_value ;
 
-attributeValue : braceList | sliceList | value ;
-braceList      : LBRACE (value (COMMA value)*)? RBRACE ;
-sliceList      : LBRACE ( LBRACKET value COLON value (COLON value)? RBRACKET (COMMA LBRACKET value COLON value (COLON value)? RBRACKET)*)? RBRACE ;
+attribute_value : brace_list | slice_list | value ;
+brace_list      : LBRACE (value (COMMA value)*)? RBRACE ;
+slice_list      : LBRACE ( LBRACKET value COLON value (COLON value)? RBRACKET (COMMA LBRACKET value COLON value (COLON value)? RBRACKET)*)? RBRACE ;
 
-shape          : value (COMMA value)* ;
+shape           : value (COMMA value)* ;
 
-value          : INT | NUMBER | IDENTIFIER | EXPRESSION ;
+value           : INT | NUMBER | IDENTIFIER | EXPRESSION ;
 
 // An ENTRY's or attribute's name: a bare or operation word
-name           : IDENTIFIER | OPERATION ;
+name            : IDENTIFIER | OPERATION ;
 
 // === Lexer Rules ===
 
