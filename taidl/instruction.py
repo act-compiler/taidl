@@ -43,7 +43,6 @@ class Instruction:
 
     instr_inputs: list[Region]
     instr_outputs: list[Region]
-    instr_semantics_str: str
     instr_semantics_ast: Optional[IDLV2Parser.ModuleContext]
     # Each text above parsed, beside it
     constraint_asts: list[IDLV2ExprParser.ConditionContext]
@@ -80,7 +79,6 @@ class Instruction:
         self.data_models = data_models
         self.instr_inputs, self.instr_input_asts = [], []
         self.instr_outputs, self.instr_output_asts = [], []
-        self.instr_semantics_str = ''
         self.instr_semantics_ast, self.instr_expression_asts = None, {}
         self.inplace = []
         # Which of set_inputs and set_outputs has run
@@ -214,7 +212,6 @@ class Instruction:
                 raise ValueError(f"{name}: {method} marks an input at the output's own starts")
 
     def add_semantics(self, semantics: str):
-        self.instr_semantics_str = semantics
         tree = self.parse_semantics(semantics)
         # Each backtick expression, by its node in the tree
         expressions = {
