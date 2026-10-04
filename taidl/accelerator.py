@@ -5,7 +5,7 @@ import inspect
 from dataclasses import dataclass, field
 from typing import List, Sequence
 
-from .data_model import Constant, DataModel
+from .data_model import DataModel, State
 from .instruction import Instruction
 
 
@@ -13,7 +13,7 @@ from .instruction import Instruction
 class Accelerator:
     name: str
     data_model: List[DataModel]
-    state: List[Constant]
+    state: List[State]
     instructions: List[Instruction] = field(init=False)
     base_dir: str = field(init=False)
 
@@ -39,7 +39,7 @@ class Accelerator:
 
     def add_initial_state(self, name: str, value: int) -> None:
         """Declare a machine state variable, @s.<name>, with its initial value."""
-        self.state.append(Constant(name, value))
+        self.state.append(State(name, value))
 
     def add_instruction(
         self,
