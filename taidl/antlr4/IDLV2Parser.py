@@ -995,7 +995,6 @@ class IDLV2Parser ( Parser ):
             while _la==IDLV2Parser.COMMA:
                 self.state = 129
                 self.match(IDLV2Parser.COMMA)
-
                 self.state = 130
                 self.value()
                 self.state = 135

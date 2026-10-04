@@ -4,7 +4,7 @@ grammar IDLV2;
 
 module       : ENTRY IDENTIFIER LBRACE instruction+ RBRACE ;
 
-instruction  : (ROOT)? IDENTIFIER EQUAL result_type OPERATION LPAREN operands? RPAREN attributes? SEMICOLON? ;
+instruction  : ROOT? IDENTIFIER EQUAL result_type OPERATION LPAREN operands? RPAREN attributes? SEMICOLON? ;
 
 result_type       : TYPE LBRACKET shape RBRACKET ;
 
@@ -18,7 +18,7 @@ attributeValue : braceList | sliceList | value ;
 braceList    : LBRACE (value (COMMA value)*)? RBRACE ;
 sliceList    : LBRACE ( LBRACKET value COLON value (COLON value)? RBRACKET (COMMA LBRACKET value COLON value (COLON value)? RBRACKET)*)? RBRACE ;
 
-shape : (value) (COMMA (value))*;
+shape : value (COMMA value)* ;
 
 value : INT | IDENTIFIER | EXPRESSION;
 
