@@ -21,6 +21,7 @@ from taidl.operations import (
 )
 
 GRAMMAR = os.path.join(os.path.dirname(taidl.antlr4.__file__), 'IDLV2.g4')
+DOCS = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'docs')
 
 acc = Accelerator('Grammar')
 
@@ -302,6 +303,54 @@ class TestWords:
     def test_type(self, typ):
         tree = parse(spec(f'ROOT %Out0 = {typ}[4] convert(%In0);'))
         assert tree.instruction(1).result_type().TYPE().getText() == typ
+
+
+def rendered(word):
+    """The docs' row of an operation word, from its row of the table."""
+    takes, attributes = OPERATIONS[word]
+    if isinstance(takes, tuple):
+        takes = f'{takes[0]} or more'
+    given = [
+        f'`{name}`: '
+        + (form if isinstance(form, str) else 'one of ' + ', '.join(form))
+        + ('' if required else ', optional')
+        for name, (form, required) in attributes.items()
+    ]
+    return (f'`{word}`', str(takes), '; '.join(given) or 'none')
+
+
+class TestDocs:
+    def test_operations_table_lists_the_words_by_family(self):
+        with open(os.path.join(DOCS, 'operations.md')) as file:
+            text = file.read()
+        section = text.split('\n## ')[0]
+        rows = [row.split('|') for row in section.splitlines() if row.startswith('| ')][2:]
+        table = {row[1].strip(): ' '.join(re.findall(r'`(\w+)`', row[2])) for row in rows}
+        assert table == FAMILIES
+
+    def test_operation_takes_table_holds_each_row(self):
+        with open(os.path.join(DOCS, 'operations.md')) as file:
+            text = file.read()
+        section = text.split('\n## What an operation takes\n')[1].split('\n## ')[0]
+        rows = [row.split('|') for row in section.splitlines() if row.startswith('| ')][2:]
+        table = [tuple(cell.strip() for cell in row[1:4]) for row in rows]
+        assert table == [rendered(word) for word in OPERATIONS]
+
+    def test_type_sentence_lists_the_types(self):
+        with open(os.path.join(DOCS, 'semantics.md')) as file:
+            sentence = re.search(r'^A type is one of (.*?), as', file.read(), re.MULTILINE)
+        assert sorted(re.findall(r'`(\w+)`', sentence.group(1))) == sorted(TYPES)
+
+    def test_several_outputs_example_loads(self):
+        with open(os.path.join(DOCS, 'semantics.md')) as file:
+            found = re.search(
+                r'^ENTRY \{\n    %In0 = f32\[8\].*?^\}$', file.read(), re.MULTILINE | re.DOTALL
+            )
+        instr = Accelerator('Readme', base_dir='.').add_instruction('split', [], [])
+        instr.set_inputs([['d0', ['0'], ['32']]])
+        instr.set_outputs([['d0', ['32'], ['16']], ['d0', ['48'], ['16']]])
+        instr.add_semantics(found.group(0))
+        assert instr.instr_semantics_ast.instruction(2).ROOT() is not None
 
 
 class TestLiterals:
