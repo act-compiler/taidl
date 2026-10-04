@@ -123,10 +123,18 @@ class Instruction:
         Each marked input adds one constraint: the output lies apart from it along
         at least one addressed dimension whose starts are spelled differently.
         """
-        self.keep_off('set_apart', apart)
+        self.keep_off('set_apart', apart, whole=False)
 
-    def keep_off(self, method: str, flags: List[bool]):
-        """Keep the output apart from each flagged input."""
+    def set_no_partial_overlap(self, no_partial: List[bool]):
+        """Mark the inputs the output shares its starts with or lies apart from, one flag per input.
+
+        Each marked input adds one constraint per addressed dimension whose starts are
+        spelled differently: the starts there are equal, or the output lies apart from it.
+        """
+        self.keep_off('set_no_partial_overlap', no_partial, whole=True)
+
+    def keep_off(self, method: str, flags: List[bool], whole: bool):
+        """Keep the output apart from each flagged input, or sharing its starts if `whole`."""
         name = self.instruction
         if len(self.instr_outputs) != 1:
             found = len(self.instr_outputs)
@@ -142,15 +150,21 @@ class Instruction:
             if buffer != out_buffer:
                 raise ValueError(f'{name}: {method} marks an input outside {out_buffer}')
             # Per dim, unlike starts: one ends before the other
-            sides = []
+            equals, sides = [], []
             for out_start, out_size, start, size in zip(out_starts, out_sizes, starts, sizes):
                 if str(out_start).strip() == str(start).strip():
                     continue
+                equals.append(f'{term(out_start)} == {term(start)}')
                 sides.append(f'{term(out_start)} + {term(out_size)} <= {term(start)}')
                 sides.append(f'{term(start)} + {term(size)} <= {term(out_start)}')
-            if not sides:
+            apart = ' or '.join(sides)
+            if whole:
+                # Or wholly over it: equal starts in each such dim
+                self.constraints = self.constraints + [f'{equal} or {apart}' for equal in equals]
+            elif sides:
+                self.constraints = self.constraints + [apart]
+            else:
                 raise ValueError(f"{name}: {method} marks an input at the output's own starts")
-            self.constraints = self.constraints + [' or '.join(sides)]
 
     def add_semantics(self, semantics: str):
         self.instr_semantics_str = semantics
