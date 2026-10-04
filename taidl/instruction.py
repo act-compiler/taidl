@@ -76,6 +76,12 @@ class Instruction:
         tree = parser.module()
         if parser.getNumberOfSyntaxErrors() > 0:
             raise SyntaxError(f"Failed to parse semantics for instruction '{self.instruction}'")
+        # One line carries ROOT
+        roots = sum(line.ROOT() is not None for line in tree.instruction())
+        if roots != 1:
+            raise SyntaxError(
+                f'{self.instruction}: semantics needs exactly one ROOT, found {roots}'
+            )
         return tree
 
     def add_constraints(self, constraints: str):
