@@ -40,18 +40,18 @@ class Instruction:
 
     def __init__(
         self,
-        instruction: str,
+        name: str,
         comp_attr: List[str],
         addr_attr: List[str],
         constraints: Sequence[str],
         update: Sequence[str],
         data_models: List[DataModel],
     ):
-        self.instruction = instruction.replace(' ', '_')
-        self.comp_attr = strings(instruction, 'computation_attr', comp_attr)
-        self.parameters = strings(instruction, 'addressing_attr', addr_attr)
-        self.constraints = strings(instruction, 'constraints', constraints)
-        self.update = strings(instruction, 'update', update)
+        self.instruction = name.replace(' ', '_')
+        self.comp_attr = strings(name, 'computation_attr', comp_attr)
+        self.parameters = strings(name, 'addressing_attr', addr_attr)
+        self.constraints = strings(name, 'constraints', constraints)
+        self.update = strings(name, 'update', update)
         self.data_models = data_models
         self.instr_inputs = []
         self.instr_outputs = []

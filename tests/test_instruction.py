@@ -19,6 +19,17 @@ def two_inputs():
     return instr
 
 
+class TestParameterNames:
+    def test_every_parameter_by_keyword(self):
+        acc = Accelerator(name='Instr', base_dir='.')
+        acc.add_data_model(name='d1', dimensions=[64], unit_dim=[16], var_type='s8')
+        acc.add_initial_state(name='busy', value=0)
+        instr = acc.add_instruction(name='t', computation_attr=['n'], addressing_attr=['x'])
+        assert (instr.instruction, instr.comp_attr, instr.parameters) == ('t', ['n'], ['x'])
+        assert [model.var_name for model in acc.data_model] == ['d0', 'd1']
+        assert acc.state == [Constant('busy', 0)]
+
+
 class TestConstraints:
     def test_add_constraints_appends(self):
         instr = make().add_instruction('t', ['n'], ['x'], constraints=['@c.n <= 4'])
