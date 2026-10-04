@@ -117,6 +117,17 @@ class TestComments:
         assert tree.instruction(1).result_type().shape().getText() == '`@c.n // 2`'
 
 
+class TestValueNames:
+    def test_name_without_percent_fails(self):
+        message = "t: semantics line 3, column 10: value name 'Out0' has no leading '%'"
+        with pytest.raises(SyntaxError, match=message):
+            parse(spec('ROOT Out0 = f32[4] copy(%In0);'))
+
+    def test_bare_word_operand_parses(self):
+        tree = parse(spec('ROOT %Out0 = pred[] constant(true);'))
+        assert tree.instruction(1).operands().operand(0).value().IDENTIFIER().getText() == 'true'
+
+
 class TestRoot:
     @pytest.mark.parametrize(
         'lines, found',
