@@ -2,7 +2,7 @@
 
 import re
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from typing import List, Optional, Sequence, Tuple
 
 from antlr4 import CommonTokenStream, InputStream
 from antlr4.error.ErrorListener import ErrorListener
@@ -43,17 +43,17 @@ class Instruction:
         instruction: str,
         comp_attr: List[str],
         addr_attr: List[str],
-        constraints: List[str],
+        constraints: Sequence[str],
         cost: str,
-        update: List[str],
+        update: Sequence[str],
         data_models: List[DataModel],
     ):
         self.instruction = instruction.replace(' ', '_')
         self.comp_attr = comp_attr
         self.parameters = addr_attr
-        self.constraints = constraints
+        self.constraints = list(constraints)
         self.cost = cost
-        self.update = update
+        self.update = list(update)
         self.data_models = data_models
         self.instr_inputs = []
         self.instr_outputs = []
