@@ -64,6 +64,11 @@ class IDLV2Visitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by IDLV2Parser#dim.
+    def visitDim(self, ctx:IDLV2Parser.DimContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by IDLV2Parser#value.
     def visitValue(self, ctx:IDLV2Parser.ValueContext):
         return self.visitChildren(ctx)

@@ -314,7 +314,17 @@ class TestShapes:
 
     def test_ranked_result(self):
         tree = parse(spec('ROOT %Out0 = f32[`@c.n`,4] broadcast(%In0), dimensions={1};'))
-        assert tree.instruction(1).result_type().shape().getText() == '`@c.n`,4'
+        shape = tree.instruction(1).result_type().shape()
+        assert [dim.getText() for dim in shape.dim()] == ['`@c.n`', '4']
+        assert (shape.dim(0).EXPRESSION().getText(), shape.dim(1).INT().getText()) == (
+            '`@c.n`',
+            '4',
+        )
+
+    @pytest.mark.parametrize('dim', ['-1', '0.5', '1e3', 'n', '%In0'])
+    def test_dimension_is_an_integer_or_an_expression(self, dim):
+        with pytest.raises(SyntaxError, match='t: semantics line 3, column 22'):
+            parse(spec(f'ROOT %Out0 = f32[{dim}] copy(%In0);'))
 
 
 class TestEntry:

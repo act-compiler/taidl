@@ -19,7 +19,8 @@ attribute_value : brace_list | slice_list | value ;
 brace_list      : LBRACE (value (COMMA value)*)? RBRACE ;
 slice_list      : LBRACE ( LBRACKET value COLON value (COLON value)? RBRACKET (COMMA LBRACKET value COLON value (COLON value)? RBRACKET)*)? RBRACE ;
 
-shape           : value (COMMA value)* ;
+shape           : dim (COMMA dim)* ;
+dim             : INT | EXPRESSION ;
 
 value           : INT | NUMBER | IDENTIFIER | EXPRESSION ;
 
