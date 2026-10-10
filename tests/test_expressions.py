@@ -6,6 +6,7 @@ from taidl import Accelerator
 from taidl.antlr4 import IDLV2ExprParser
 
 EXPECTING = "expecting {ADDRESSING, COMPUTATIONAL, STATE, '-', '(', INT}"
+COMPARING = "expecting {'==', '!=', '<', '<=', '>', '>='}"
 
 
 def make():
@@ -15,8 +16,8 @@ def make():
     return acc
 
 
-def instruction():
-    return make().add_instruction('t', ['n', 'm'], ['x', 'y'])
+def instruction(**given):
+    return make().add_instruction('t', ['n', 'm'], ['x', 'y'], **given)
 
 
 class TestValues:
@@ -133,3 +134,87 @@ class TestSemantics:
         text = f'ENTRY {{\n    %In0 = f32[4] parameter(0);\n    ROOT %Out0 = f32[{shape}] copy(%In0);\n}}\n'
         with pytest.raises(SyntaxError, match=re.escape(f't: semantics {message}')):
             instruction().add_semantics(text)
+
+
+class TestConstraints:
+    @pytest.mark.parametrize(
+        'text',
+        [
+            '@c.n == 1 and @s.mode == 1',
+            '@c.n == 1 or @c.n == 0',
+            '(@c.n == 1 or @c.m == 1) and @c.n > 0',
+            '(@a.x * 8) + 4 != @a.y',
+            '@c.n % 16 == 0',
+            '@a.x < 64',
+        ],
+    )
+    def test_constraint_parses(self, text):
+        instr = instruction(constraints=[text])
+        assert isinstance(instr.constraint_asts[0], IDLV2ExprParser.ConditionContext)
+
+    @pytest.mark.parametrize(
+        'text, message',
+        [
+            ('0 <= @c.n < 8', "line 1, column 11: mismatched input '<' expecting <EOF>"),
+            ('not @c.n == 0', f"line 1, column 1: extraneous input 'not' {EXPECTING}"),
+            ('@c.n', f"line 1, column 5: mismatched input '<EOF>' {COMPARING}"),
+            ('@c.n = 1', f"line 1, column 6: mismatched input '=' {COMPARING}"),
+            ('@c.n == 1 && @c.m == 1', "line 1, column 11: mismatched input '&' expecting <EOF>"),
+            ('@a.x <= ', f"line 1, column 9: mismatched input '<EOF>' {EXPECTING}"),
+        ],
+        ids=['chained', 'negated', 'value', 'assignment', 'symbol_and', 'unfinished'],
+    )
+    def test_constraint_fails(self, text, message):
+        with pytest.raises(SyntaxError, match=re.escape(f"t: constraint '{text}' {message}")):
+            instruction(constraints=[text])
+
+    def test_appended_constraint_fails(self):
+        instr = instruction(constraints=['@a.x >= 0'])
+        message = f"t: constraint '@a.x <= ' line 1, column 9: mismatched input '<EOF>' {EXPECTING}"
+        with pytest.raises(SyntaxError, match=re.escape(message)):
+            instr.add_constraints(['@a.x < 64', '@a.x <= '])
+        assert instr.constraints == ['@a.x >= 0']
+
+    def test_each_constraint_held_parsed(self):
+        instr = instruction(constraints=['@a.x >= 0'])
+        instr.add_constraints(['@c.n <= 4'])
+        instr.set_inputs([['d1', ['@a.x'], ['@c.n']]])
+        instr.set_outputs([['d1', ['@a.y'], ['@c.n']]])
+        instr.set_apart([True])
+        trees = [tree.getText() for tree in instr.constraint_asts]
+        assert trees == ['@a.x>=0', '@c.n<=4', '@a.y+@c.n<=@a.xor@a.x+@c.n<=@a.y']
+
+
+class TestUpdates:
+    @pytest.mark.parametrize(
+        'text', ['@s.mode = 1', '@s.mode = (@s.mode + 1) % 4', '@s.mode = @a.x']
+    )
+    def test_update_parses(self, text):
+        instr = instruction(update=[text])
+        assert isinstance(instr.update_asts[0], IDLV2ExprParser.UpdateContext)
+        assert instr.update_asts[0].STATE().getText() == '@s.mode'
+
+    @pytest.mark.parametrize(
+        'text, message',
+        [
+            ('@s.mode += 1', "line 1, column 9: extraneous input '+' expecting '='"),
+            ('@s.mode -= @c.n', "line 1, column 9: extraneous input '-' expecting '='"),
+            ('@c.n = 1', "line 1, column 1: mismatched input '@c.n' expecting STATE"),
+            ('@s.mode == 1', "line 1, column 9: mismatched input '==' expecting '='"),
+            ('@s.mode = @s.mode = 1', "line 1, column 19: mismatched input '=' expecting <EOF>"),
+            ('@s.mode = 1; @s.mode = 2', "line 1, column 12: mismatched input ';' expecting <EOF>"),
+            ('@s.mode =', f"line 1, column 10: mismatched input '<EOF>' {EXPECTING}"),
+        ],
+        ids=[
+            'add_assign',
+            'subtract_assign',
+            'attribute',
+            'comparison',
+            'chained',
+            'two',
+            'unfinished',
+        ],
+    )
+    def test_update_fails(self, text, message):
+        with pytest.raises(SyntaxError, match=re.escape(f"t: update '{text}' {message}")):
+            instruction(update=[text])

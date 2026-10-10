@@ -46,6 +46,8 @@ class Instruction:
     instr_semantics_str: str
     instr_semantics_ast: Optional[IDLV2Parser.ModuleContext]
     # Each text above parsed, beside it
+    constraint_asts: list[IDLV2ExprParser.ConditionContext]
+    update_asts: list[IDLV2ExprParser.UpdateContext]
     instr_input_asts: list[RegionTrees]
     instr_output_asts: list[RegionTrees]
     instr_expression_asts: dict[TerminalNode, IDLV2ExprParser.ExpressionContext]
@@ -65,8 +67,10 @@ class Instruction:
         self.instruction = name.replace(' ', '_')
         self.comp_attr = strings(name, 'computation_attr', comp_attr)
         self.parameters = strings(name, 'addressing_attr', addr_attr)
-        self.constraints = strings(name, 'constraints', constraints)
-        self.update = strings(name, 'update', update)
+        self.constraints, self.constraint_asts = [], []
+        self.append_constraints(strings(name, 'constraints', constraints))
+        given = strings(name, 'update', update)
+        self.update, self.update_asts = given, [self.parse_text('update', text) for text in given]
         self.data_models = data_models
         self.instr_inputs, self.instr_input_asts = [], []
         self.instr_outputs, self.instr_output_asts = [], []
@@ -185,9 +189,9 @@ class Instruction:
             apart = ' or '.join(sides)
             if whole:
                 # Or wholly over it: equal starts in each such dim
-                self.constraints = self.constraints + [f'{equal} or {apart}' for equal in equals]
+                self.append_constraints([f'{equal} or {apart}' for equal in equals])
             elif sides:
-                self.constraints = self.constraints + [apart]
+                self.append_constraints([apart])
             else:
                 raise ValueError(f"{name}: {method} marks an input at the output's own starts")
 
@@ -269,9 +273,13 @@ class Instruction:
 
     def add_constraints(self, constraints: Sequence[str]):
         """Append constraints to those the instruction already has."""
-        self.constraints = self.constraints + strings(
-            self.instruction, 'add_constraints', constraints
-        )
+        self.append_constraints(strings(self.instruction, 'add_constraints', constraints))
+
+    def append_constraints(self, constraints: list[str]):
+        """Parse each constraint and append it, with its tree."""
+        trees = [self.parse_text('constraint', text) for text in constraints]
+        self.constraints = self.constraints + constraints
+        self.constraint_asts = self.constraint_asts + trees
 
     def parse_text(self, place: str, text: str, token: CommonToken | None = None):
         """Parse a text by its place's entry rule; a fault names the place, its line and column.
@@ -308,6 +316,8 @@ RULES = {
     'start': 'expression_text',
     'size': 'expression_text',
     'semantics': 'expression_text',
+    'constraint': 'constraint_text',
+    'update': 'update_text',
 }
 
 
