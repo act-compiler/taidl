@@ -8,8 +8,15 @@ from antlr4 import CommonTokenStream, InputStream
 from antlr4.error.ErrorListener import ErrorListener
 
 from .data_model import DataModel
-from .antlr4 import IDLV2Lexer, IDLV2Parser
+from .antlr4 import IDLV2ExprLexer, IDLV2ExprParser, IDLV2Lexer, IDLV2Parser
 from .operations import check_operations
+
+# Start or size: integer, or expression over attributes and state
+Extent = int | str
+# A buffer's name, then its starts, then its sizes
+Region = Sequence[str | Sequence[Extent]]
+# A region parsed: buffer name, start trees, size trees
+RegionTrees = list[str | list[IDLV2ExprParser.ExpressionContext]]
 
 
 class SyntaxErrors(ErrorListener):
@@ -35,6 +42,9 @@ class Instruction:
     instr_outputs: List[Tuple[str, List[str], List[str]]]
     instr_semantics_str: str
     instr_semantics_ast: Optional[IDLV2Parser.ModuleContext]
+    # Each text above parsed, beside it
+    instr_input_asts: list[RegionTrees]
+    instr_output_asts: list[RegionTrees]
     inplace: List[bool]
     inputs_given: bool
     outputs_given: bool
@@ -54,8 +64,8 @@ class Instruction:
         self.constraints = strings(name, 'constraints', constraints)
         self.update = strings(name, 'update', update)
         self.data_models = data_models
-        self.instr_inputs = []
-        self.instr_outputs = []
+        self.instr_inputs, self.instr_input_asts = [], []
+        self.instr_outputs, self.instr_output_asts = [], []
         self.instr_semantics_str = ''
         self.instr_semantics_ast = None
         self.inplace = []
@@ -73,17 +83,30 @@ class Instruction:
         return model
 
     def set_inputs(self, inputs: List[Tuple[str, List[str], List[str]]]):
+        trees = self.parse_regions(inputs)
         if self.instr_semantics_ast is not None:
             self.check_values(self.instr_semantics_ast, 'input', inputs)
-        self.instr_inputs = list(inputs)
+        self.instr_inputs, self.instr_input_asts = list(inputs), trees
         self.inplace = [False] * len(inputs)
         self.inputs_given = True
 
     def set_outputs(self, outputs: List[Tuple[str, List[str], List[str]]]):
+        trees = self.parse_regions(outputs)
         if self.instr_semantics_ast is not None:
             self.check_values(self.instr_semantics_ast, 'output', outputs)
-        self.instr_outputs = list(outputs)
+        self.instr_outputs, self.instr_output_asts = list(outputs), trees
         self.outputs_given = True
+
+    def parse_regions(self, regions: Sequence[Region]) -> list[RegionTrees]:
+        """Parse each start and size of each region, an integer by its decimal text."""
+        return [
+            [
+                buffer,
+                [self.parse_text('start', str(start)) for start in starts],
+                [self.parse_text('size', str(size)) for size in sizes],
+            ]
+            for buffer, starts, sizes in regions
+        ]
 
     def check_values(
         self,
@@ -240,6 +263,32 @@ class Instruction:
         self.constraints = self.constraints + strings(
             self.instruction, 'add_constraints', constraints
         )
+
+    def parse_text(self, place: str, text: str):
+        """Parse a text by its place's entry rule; a fault names the place, its line and column."""
+        tree, errors = parse(IDLV2ExprLexer, IDLV2ExprParser, RULES[place], text)
+        if errors:
+            raise self.text_error(place, text, *errors[0])
+        return tree.getChild(0)
+
+    def text_error(
+        self,
+        place: str,
+        text: str,
+        line: int,
+        column: int,
+        message: str,
+    ) -> SyntaxError:
+        """A fault at a line and column of a text, both from 1."""
+        where = f"{place} '{text}' line {line}, column {column}"
+        return SyntaxError(f'{self.instruction}: {where}: {message}')
+
+
+# Each place's entry rule in the expression grammar
+RULES = {
+    'start': 'expression_text',
+    'size': 'expression_text',
+}
 
 
 def parse(lexer_class, parser_class, rule: str, text: str):
