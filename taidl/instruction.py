@@ -6,6 +6,9 @@ from typing import List, Optional, Sequence, Tuple
 
 from antlr4 import CommonTokenStream, InputStream
 from antlr4.error.ErrorListener import ErrorListener
+from antlr4.Token import CommonToken
+from antlr4.tree.Tree import TerminalNode
+from antlr4.tree.Trees import Trees
 
 from .data_model import DataModel
 from .antlr4 import IDLV2ExprLexer, IDLV2ExprParser, IDLV2Lexer, IDLV2Parser
@@ -45,6 +48,7 @@ class Instruction:
     # Each text above parsed, beside it
     instr_input_asts: list[RegionTrees]
     instr_output_asts: list[RegionTrees]
+    instr_expression_asts: dict[TerminalNode, IDLV2ExprParser.ExpressionContext]
     inplace: List[bool]
     inputs_given: bool
     outputs_given: bool
@@ -67,7 +71,7 @@ class Instruction:
         self.instr_inputs, self.instr_input_asts = [], []
         self.instr_outputs, self.instr_output_asts = [], []
         self.instr_semantics_str = ''
-        self.instr_semantics_ast = None
+        self.instr_semantics_ast, self.instr_expression_asts = None, {}
         self.inplace = []
         # Which of set_inputs and set_outputs has run
         self.inputs_given = False
@@ -190,12 +194,17 @@ class Instruction:
     def add_semantics(self, semantics: str):
         self.instr_semantics_str = semantics
         tree = self.parse_semantics(semantics)
+        # Each backtick expression, by its node in the tree
+        expressions = {
+            node: self.parse_text('semantics', node.getText()[1:-1], node.getSymbol())
+            for node in Trees.findAllTokenNodes(tree, IDLV2Parser.EXPRESSION)
+        }
         # Against the regions given so far, even none
         if self.inputs_given:
             self.check_values(tree, 'input', self.instr_inputs)
         if self.outputs_given:
             self.check_values(tree, 'output', self.instr_outputs)
-        self.instr_semantics_ast = tree
+        self.instr_semantics_ast, self.instr_expression_asts = tree, expressions
 
     def parse_semantics(self, semantics: str):
         """Parse semantics into AST eagerly to catch syntax errors early"""
@@ -264,30 +273,41 @@ class Instruction:
             self.instruction, 'add_constraints', constraints
         )
 
-    def parse_text(self, place: str, text: str):
-        """Parse a text by its place's entry rule; a fault names the place, its line and column."""
+    def parse_text(self, place: str, text: str, token: CommonToken | None = None):
+        """Parse a text by its place's entry rule; a fault names the place, its line and column.
+
+        A backtick expression's place is the semantics, and its token says where it stands there.
+        """
         tree, errors = parse(IDLV2ExprLexer, IDLV2ExprParser, RULES[place], text)
         if errors:
-            raise self.text_error(place, text, *errors[0])
+            raise self.text_error(place, text, token, *errors[0])
         return tree.getChild(0)
 
     def text_error(
         self,
         place: str,
         text: str,
+        token: CommonToken | None,
         line: int,
         column: int,
         message: str,
     ) -> SyntaxError:
         """A fault at a line and column of a text, both from 1."""
-        where = f"{place} '{text}' line {line}, column {column}"
-        return SyntaxError(f'{self.instruction}: {where}: {message}')
+        if token is None:
+            where = f"{place} '{text}' line {line}, column {column}"
+            return SyntaxError(f'{self.instruction}: {where}: {message}')
+        # Counted in the semantics, past the opening backtick
+        if line == 1:
+            column += token.column + 1
+        line += token.line - 1
+        return SyntaxError(f'{self.instruction}: semantics line {line}, column {column}: {message}')
 
 
 # Each place's entry rule in the expression grammar
 RULES = {
     'start': 'expression_text',
     'size': 'expression_text',
+    'semantics': 'expression_text',
 }
 
 

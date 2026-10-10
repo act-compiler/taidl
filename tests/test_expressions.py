@@ -94,3 +94,42 @@ class TestValues:
             for buffer, starts, sizes in instr.instr_input_asts + instr.instr_output_asts
         ]
         assert held == [['d0', ['0'], ['@c.n*128']], ['d1', ['@a.x*2+1'], ['4']]]
+
+
+SEMANTICS = """ENTRY {
+    %In0 = f32[`@c.n * 2`,4] parameter(0);
+    %a = f32[`@c.n *
+ 2`,4] reshape(%In0);
+    ROOT %Out0 = f32[2,2] slice(%a), slice={[0:2], [0:`@c.m`:2]};
+}
+"""
+
+
+class TestSemantics:
+    def test_each_expression_held_by_its_node(self):
+        instr = instruction()
+        instr.add_semantics(SEMANTICS)
+        lines = instr.instr_semantics_ast.instruction()
+        nodes = [
+            lines[0].result_type().shape().dim(0).EXPRESSION(),
+            lines[1].result_type().shape().dim(0).EXPRESSION(),
+        ]
+        nodes.append(
+            lines[2].attributes().attribute(0).attribute_value().slice_list().value(3).EXPRESSION()
+        )
+        trees = [instr.instr_expression_asts[node] for node in nodes]
+        assert [tree.getText() for tree in trees] == ['@c.n*2', '@c.n*2', '@c.m']
+        assert len(instr.instr_expression_asts) == 3
+
+    @pytest.mark.parametrize(
+        'shape, message',
+        [
+            ('`@c.n *`,4', f"line 3, column 29: mismatched input '<EOF>' {EXPECTING}"),
+            ('`4 +\n @c.n ** 2`', f"line 4, column 8: extraneous input '*' {EXPECTING}"),
+        ],
+        ids=['first_line', 'second_line'],
+    )
+    def test_expression_fails_at_its_line_and_column(self, shape, message):
+        text = f'ENTRY {{\n    %In0 = f32[4] parameter(0);\n    ROOT %Out0 = f32[{shape}] copy(%In0);\n}}\n'
+        with pytest.raises(SyntaxError, match=re.escape(f't: semantics {message}')):
+            instruction().add_semantics(text)
