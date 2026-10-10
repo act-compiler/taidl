@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "taidl"
-version = "2.8"
+version = "2.9"
 description = "Tensor Accelerator ISA Definition Language"
 requires-python = ">=3.14"
 license = "Apache-2.0"
