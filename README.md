@@ -31,10 +31,10 @@ pip install -e .
 ## Testing
 
 ```bash
-pip install -e .
-pip install pytest
-pytest tests/
+./tests/pytest.sh
 ```
+
+`tests/pytest.sh` runs the tests in `devanshdvj/act-env:py3.14-jax0.10.2`, the image `docker/act.env` names, in its tag for the host's architecture, amd64 or arm64.
 
 ## Implementation Details
 

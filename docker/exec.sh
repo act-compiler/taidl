@@ -6,9 +6,9 @@ source act.env
 
 ARCH=$(uname -m)
 if [ "$ARCH" = "x86_64" ]; then
-  IMAGE_NAME="devanshdvj/act:${ACT_DOCKERHUB_TAG}-amd64"
+  IMAGE_NAME="devanshdvj/act-env:${ACT_ENV_TAG}-amd64"
 elif [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then
-  IMAGE_NAME="devanshdvj/act:${ACT_DOCKERHUB_TAG}-arm64"
+  IMAGE_NAME="devanshdvj/act-env:${ACT_ENV_TAG}-arm64"
 else
   echo "Error: Unsupported architecture: $ARCH"
   exit 1
