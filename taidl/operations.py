@@ -169,20 +169,27 @@ Fault = tuple[CommonToken, str]
 
 
 def check_operations(semantics: IDLV2Parser.ModuleContext) -> Fault | None:
-    """The first line that breaks its word's row."""
+    """The first line that breaks its word's row, or names a value no earlier line defines."""
+    defined = set()
     for line in semantics.instruction():
         word = line.OPERATION().getSymbol()
         takes, attributes = OPERATIONS[word.text]
         operands = line.operands().operand() if line.operands() else []
         given = line.attributes().attribute() if line.attributes() else []
-        fault = operand_fault(word, takes, operands) or attribute_fault(word, attributes, given)
+        fault = operand_fault(word, takes, operands, defined) or attribute_fault(
+            word, attributes, given
+        )
         if fault:
             return fault
+        name = line.IDENTIFIER().getSymbol()
+        if name.text in defined:
+            return name, f"'{name.text}' is defined twice"
+        defined.add(name.text)
     return None
 
 
-def operand_fault(word: CommonToken, takes, operands: list) -> Fault | None:
-    """A line's operands against its row: their count and what each is."""
+def operand_fault(word: CommonToken, takes, operands: list, defined: set[str]) -> Fault | None:
+    """A line's operands against its row: their count, what each is, and where each is defined."""
     found = len(operands)
     if takes in (NUMBER_OF_INPUT, LITERAL):
         if found != 1:
@@ -205,6 +212,8 @@ def operand_fault(word: CommonToken, takes, operands: list) -> Fault | None:
         name = operand.getText()
         if not name.startswith('%'):
             return operand.start, f"{word.text} takes values as operands, found '{name}'"
+        if name not in defined:
+            return operand.start, f"'{name}' is defined by no earlier line"
     return None
 
 

@@ -448,6 +448,18 @@ class TestOperations:
                 "line 3, column 33: constant takes a number, true, false or an expression, found '%In0'",
             ),
             (
+                ['ROOT %Out0 = f32[4] add(%In0, %b);'],
+                "line 3, column 35: '%b' is defined by no earlier line",
+            ),
+            (
+                [
+                    '%a = f32[4] copy(%In0);',
+                    '%a = f32[4] negate(%In0);',
+                    'ROOT %Out0 = f32[4] add(%a, %a);',
+                ],
+                "line 4, column 5: '%a' is defined twice",
+            ),
+            (
                 ['ROOT %Out0 = f32[4] add(%In0, %In0), dimensions={0};'],
                 "line 3, column 42: add has no attribute 'dimensions': it takes none",
             ),
@@ -475,6 +487,8 @@ class TestOperations:
             'integer_operand',
             'number_operand',
             'value_as_constant',
+            'undefined_value',
+            'value_defined_twice',
             'attribute_of_a_word_with_none',
             'unknown_attribute',
             'attribute_given_twice',
