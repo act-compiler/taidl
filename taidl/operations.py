@@ -4,6 +4,12 @@ XLA-HLO's shape-free checks, operand count and kind and each attribute's name, p
 with StableHLO's dot, pad and transpose_a rules; shapes and element types are not checked here.
 """
 
+import re
+
+from antlr4.Token import CommonToken
+
+from .antlr4 import IDLV2Parser
+
 # The form of an attribute's value
 INT = 'an integer'
 INTS = 'a list of integers'
@@ -157,3 +163,99 @@ OPERATIONS = {
     'reduce_or': (1, DIMENSIONS),
     'reduce_xor': (1, DIMENSIONS),
 }
+
+# A fault: its token and its message
+Fault = tuple[CommonToken, str]
+
+
+def check_operations(semantics: IDLV2Parser.ModuleContext) -> Fault | None:
+    """The first line that breaks its word's row."""
+    for line in semantics.instruction():
+        word = line.OPERATION().getSymbol()
+        takes, attributes = OPERATIONS[word.text]
+        operands = line.operands().operand() if line.operands() else []
+        given = line.attributes().attribute() if line.attributes() else []
+        fault = operand_fault(word, takes, operands) or attribute_fault(word, attributes, given)
+        if fault:
+            return fault
+    return None
+
+
+def operand_fault(word: CommonToken, takes, operands: list) -> Fault | None:
+    """A line's operands against its row: their count and what each is."""
+    found = len(operands)
+    if takes in (NUMBER_OF_INPUT, LITERAL):
+        if found != 1:
+            return word, f'{word.text} takes 1 operand, found {found}'
+        value = operands[0].value()
+        if takes == NUMBER_OF_INPUT:
+            fits = value.INT() is not None
+        else:
+            fits = value.IDENTIFIER() is None or value.getText() in ('true', 'false')
+        return (
+            None if fits else (value.start, f"{word.text} takes {takes}, found '{value.getText()}'")
+        )
+    least, most = takes if isinstance(takes, tuple) else (takes, takes)
+    if most is None and found < least:
+        return word, f'{word.text} takes {least} or more operands, found {found}'
+    if most is not None and found != least:
+        plural = '' if least == 1 else 's'
+        return word, f'{word.text} takes {least} operand{plural}, found {found}'
+    for operand in operands:
+        name = operand.getText()
+        if not name.startswith('%'):
+            return operand.start, f"{word.text} takes values as operands, found '{name}'"
+    return None
+
+
+def attribute_fault(word: CommonToken, takes: dict, attributes: list) -> Fault | None:
+    """A line's attributes against its row: unknown, given twice, malformed, then missing."""
+    seen = set()
+    for attribute in attributes:
+        name = attribute.name().getText()
+        if name not in takes:
+            known = ', '.join(takes) or 'none'
+            return attribute.start, f"{word.text} has no attribute '{name}': it takes {known}"
+        if name in seen:
+            return attribute.start, f"{word.text} is given '{name}' twice"
+        seen.add(name)
+        form = takes[name][0]
+        value = attribute.attribute_value()
+        if not fits(form, value):
+            found = value.getText()
+            return value.start, f"'{name}' of {word.text} takes {described(form)}, found '{found}'"
+    for name, (_, required) in takes.items():
+        if required and name not in seen:
+            return word, f"{word.text} needs the attribute '{name}'"
+    return None
+
+
+def fits(form, given: IDLV2Parser.Attribute_valueContext) -> bool:
+    """Whether an attribute's value has the form the table gives it."""
+    value, braces, ranges = given.value(), given.brace_list(), given.slice_list()
+    if form == INT:
+        return value is not None and is_integer(value)
+    if form in (INTS, ONE_INT):
+        if braces is None or not all(is_integer(entry) for entry in braces.value()):
+            return False
+        return form == INTS or len(braces.value()) == 1
+    if form == RANGES:
+        return ranges is not None and all(is_integer(bound) for bound in ranges.value())
+    if form == BOOL:
+        return value is not None and value.getText() in ('true', 'false')
+    if form == NUMBER:
+        return value is not None and (value.INT() or value.NUMBER()) is not None
+    # A word of a closed set
+    return value is not None and value.IDENTIFIER() is not None and value.getText() in form
+
+
+def is_integer(value: IDLV2Parser.ValueContext) -> bool:
+    """An integer literal of either sign, or an expression."""
+    if value.INT() or value.EXPRESSION():
+        return True
+    return value.NUMBER() is not None and re.fullmatch(r'-?[0-9]+', value.getText()) is not None
+
+
+def described(form) -> str:
+    """A form as a message names it."""
+    return form if isinstance(form, str) else 'one of ' + ', '.join(form)

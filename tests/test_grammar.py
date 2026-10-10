@@ -4,8 +4,21 @@ import os
 import re
 
 import pytest
+from antlr4 import InputStream
 import taidl.antlr4
 from taidl import Accelerator
+from taidl.antlr4 import IDLV2Lexer
+from taidl.operations import (
+    BOOL,
+    INT,
+    INTS,
+    LITERAL,
+    NUMBER,
+    NUMBER_OF_INPUT,
+    ONE_INT,
+    OPERATIONS,
+    RANGES,
+)
 
 GRAMMAR = os.path.join(os.path.dirname(taidl.antlr4.__file__), 'IDLV2.g4')
 
@@ -194,11 +207,11 @@ class TestInputs:
             ),
             (
                 ['%In1 = f32[4] parameter(%In0);', 'ROOT %Out0 = f32[4] add(%In0, %In1);'],
-                "line 3, column 19: parameter(%In0) needs one integer, the input's number",
+                "line 3, column 29: parameter takes the number of an input, found '%In0'",
             ),
             (
                 ['%In1 = f32[4] parameter(0,1);', 'ROOT %Out0 = f32[4] add(%In0, %In1);'],
-                "line 3, column 19: parameter(0,1) needs one integer, the input's number",
+                'line 3, column 19: parameter takes 1 operand, found 2',
             ),
         ],
         ids=[
@@ -232,24 +245,42 @@ FAMILIES = {
     'normalization': 'batch_norm_inference',
     'reduction': 'reduce_add reduce_multiply reduce_max reduce_min reduce_and reduce_or reduce_xor',
 }
-OPERATIONS = ' '.join(FAMILIES.values()).split()
+WORDS = ' '.join(FAMILIES.values()).split()
+
+# A value of each form an attribute takes
+SAMPLES = {INT: '0', INTS: '{0}', ONE_INT: '{0}', RANGES: '{[0:4]}', BOOL: 'true', NUMBER: '0.5'}
+
+
+def row_lines(word):
+    """Lines that write word with the operands and the required attributes of its row."""
+    takes, attributes = OPERATIONS[word]
+    # parameter declares an input; any other word computes the output
+    if takes == NUMBER_OF_INPUT:
+        return ['%In1 = f32[4] parameter(1);', COPY]
+    if takes == LITERAL:
+        operands = '0'
+    else:
+        count = takes[0] if isinstance(takes, tuple) else takes
+        operands = ', '.join(['%In0'] * count)
+    given = ''.join(
+        f', {name}={form[0] if isinstance(form, tuple) else SAMPLES[form]}'
+        for name, (form, required) in attributes.items()
+        if required
+    )
+    return [f'ROOT %Out0 = f32[4] {word}({operands}){given};']
+
 
 TYPES = 'pred s2 s4 s8 s16 s32 s64 u2 u4 u8 u16 u32 u64 f8e4m3fn f8e5m2 f16 bf16 f32 f64'.split()
 
 
 class TestWords:
     def test_lists_match_grammar(self):
-        assert sorted(lexed('OPERATION')) == sorted(OPERATIONS)
+        assert sorted(lexed('OPERATION')) == sorted(WORDS)
         assert sorted(lexed('TYPE')) == sorted(TYPES)
 
-    @pytest.mark.parametrize('op', OPERATIONS)
+    @pytest.mark.parametrize('op', WORDS)
     def test_operation(self, op):
-        # parameter declares an input; any other word computes the output
-        if op == 'parameter':
-            lines = ['%In1 = f32[4] parameter(1);', COPY]
-        else:
-            lines = [f'ROOT %Out0 = f32[4] {op}(%In0);']
-        tree = parse(spec(*lines))
+        tree = parse(spec(*row_lines(op)))
         assert tree.instruction(1).OPERATION().getText() == op
 
     @pytest.mark.parametrize('op', ['frobnicate', 'log-plus-one'], ids=['unknown', 'hyphenated'])
@@ -282,9 +313,8 @@ class TestLiterals:
 
     @pytest.mark.parametrize('text', ['info', 'nano', 'inf_x', '%inf'])
     def test_longer_word_stays_identifier(self, text):
-        tree = parse(spec(f'ROOT %Out0 = f32[1] constant({text});'))
-        value = tree.instruction(1).operands().operand(0).value()
-        assert value.IDENTIFIER().getText() == text
+        tokens = IDLV2Lexer(InputStream(text)).getAllTokens()
+        assert [(token.type, token.text) for token in tokens] == [(IDLV2Lexer.IDENTIFIER, text)]
 
     def test_integer_stays_int(self):
         tree = parse(spec('ROOT %Out0 = s32[1] constant(7);'))
@@ -293,16 +323,21 @@ class TestLiterals:
         assert value.NUMBER() is None
 
     def test_number_attribute(self):
-        tree = parse(spec('ROOT %Out0 = f32[4] power(%In0), exponent=-0.5;'))
+        operands = ', '.join(['%In0'] * 5)
+        line = (
+            f'ROOT %Out0 = f32[4] batch_norm_inference({operands}), epsilon=-0.5, feature_index=0;'
+        )
+        tree = parse(spec(line))
         value = tree.instruction(1).attributes().attribute(0).attribute_value().value()
         assert value.NUMBER().getText() == '-0.5'
 
-    def test_number_brace_list(self):
-        tree = parse(spec('ROOT %Out0 = f32[4] constant(), values={-1, 0.5, 2};'))
-        attribute = tree.instruction(1).attributes().attribute(0)
+    def test_signed_brace_list(self):
+        line = 'edge_padding_low={-1, 0}, edge_padding_high={2, -0}, interior_padding={0, 0};'
+        tree = parse(spec('%z = f32[] constant(0);', f'ROOT %Out0 = f32[4] pad(%In0, %z), {line}'))
+        attribute = tree.instruction(2).attributes().attribute(1)
         values = attribute.attribute_value().brace_list().value()
-        assert [v.getText() for v in values] == ['-1', '0.5', '2']
-        assert [v.NUMBER() is not None for v in values] == [True, True, False]
+        assert [v.getText() for v in values] == ['2', '-0']
+        assert [v.NUMBER() is not None for v in values] == [False, True]
 
 
 class TestShapes:
@@ -342,11 +377,10 @@ class TestAttributes:
         assert attribute.name().getText() == 'dimensions'
         assert attribute.name().IDENTIFIER() is not None
 
-    @pytest.mark.parametrize('op', ['slice', 'select', 'dot'])
-    def test_operation_name(self, op):
-        tree = parse(spec(f'ROOT %Out0 = f32[4] copy(%In0), {op}=1;'))
+    def test_operation_name(self):
+        tree = parse(spec('ROOT %Out0 = f32[2] slice(%In0), slice={[0:2]};'))
         attribute = tree.instruction(1).attributes().attribute(0)
-        assert attribute.name().getText() == op
+        assert attribute.name().getText() == 'slice'
         assert attribute.name().OPERATION() is not None
 
     def test_slice_list(self):
@@ -354,3 +388,153 @@ class TestAttributes:
         attribute = tree.instruction(1).attributes().attribute(0)
         assert attribute.name().getText() == 'slice'
         assert attribute.attribute_value().slice_list().getText() == '{[0:4:2]}'
+
+
+class TestOperations:
+    def test_one_row_per_word_in_the_grammars_order(self):
+        assert list(OPERATIONS) == lexed('OPERATION')
+
+    @pytest.mark.parametrize(
+        'lines',
+        [
+            [
+                'ROOT %Out0 = f32[4] dot(%In0, %In0), lhs_contracting_dims={}, rhs_contracting_dims={};'
+            ],
+            [
+                '%Out0 = f32[4] copy(%In0);',
+                'ROOT %Out1 = f32[8] concatenate(%In0, %Out0), dimensions={0};',
+            ],
+            ['ROOT %Out0 = pred[4] compare(%In0, %In0), type=TOTALORDER, direction=LT;'],
+            ['ROOT %Out0 = f32[2] slice(%In0), slice={[`@c.n`:4:2]};'],
+            ['ROOT %Out0 = s32[] constant(`@c.n`);'],
+        ],
+        ids=[
+            'empty_contracting_lists',
+            'several_operands',
+            'any_order',
+            'expression_bound',
+            'expression_constant',
+        ],
+    )
+    def test_line_loads(self, lines):
+        tree = parse(spec(*lines))
+        assert tree.instruction()[-1].ROOT() is not None
+
+    @pytest.mark.parametrize(
+        'lines, message',
+        [
+            (
+                ['ROOT %Out0 = f32[4] add(%In0);'],
+                'line 3, column 25: add takes 2 operands, found 1',
+            ),
+            (
+                ['ROOT %Out0 = f32[4] abs(%In0, %In0);'],
+                'line 3, column 25: abs takes 1 operand, found 2',
+            ),
+            (
+                ['ROOT %Out0 = f32[4] concatenate(), dimensions={0};'],
+                'line 3, column 25: concatenate takes 1 or more operands, found 0',
+            ),
+            (
+                ['ROOT %Out0 = f32[4] add(%In0, 1);'],
+                "line 3, column 35: add takes values as operands, found '1'",
+            ),
+            (
+                ['ROOT %Out0 = f32[4] multiply(%In0, -0.5);'],
+                "line 3, column 40: multiply takes values as operands, found '-0.5'",
+            ),
+            (
+                ['ROOT %Out0 = f32[] constant(%In0);'],
+                "line 3, column 33: constant takes a number, true, false or an expression, found '%In0'",
+            ),
+            (
+                ['ROOT %Out0 = f32[4] add(%In0, %In0), dimensions={0};'],
+                "line 3, column 42: add has no attribute 'dimensions': it takes none",
+            ),
+            (
+                ['ROOT %Out0 = f32[4] transpose(%In0), permutation={0};'],
+                "line 3, column 42: transpose has no attribute 'permutation': it takes dimensions",
+            ),
+            (
+                ['ROOT %Out0 = f32[4] transpose(%In0), dimensions={0}, dimensions={0};'],
+                "line 3, column 58: transpose is given 'dimensions' twice",
+            ),
+            (
+                ['ROOT %Out0 = f32[4] transpose(%In0);'],
+                "line 3, column 25: transpose needs the attribute 'dimensions'",
+            ),
+            (
+                ['ROOT %Out0 = f32[4] dot(%In0, %In0), rhs_contracting_dims={0};'],
+                "line 3, column 25: dot needs the attribute 'lhs_contracting_dims'",
+            ),
+        ],
+        ids=[
+            'too_few_operands',
+            'too_many_operands',
+            'fewer_than_the_least',
+            'integer_operand',
+            'number_operand',
+            'value_as_constant',
+            'attribute_of_a_word_with_none',
+            'unknown_attribute',
+            'attribute_given_twice',
+            'missing_attribute',
+            'dot_without_its_contracting_lists',
+        ],
+    )
+    def test_line_fails(self, lines, message):
+        with pytest.raises(SyntaxError, match=re.escape(f't: semantics {message}')):
+            parse(spec(*lines))
+
+    @pytest.mark.parametrize(
+        'line, message',
+        [
+            (
+                'iota(), iota_dimension={0}',
+                "column 48: 'iota_dimension' of iota takes an integer, found '{0}'",
+            ),
+            (
+                'transpose(%In0), dimensions=0',
+                "column 53: 'dimensions' of transpose takes a list of integers, found '0'",
+            ),
+            (
+                'transpose(%In0), dimensions={0.5}',
+                "column 53: 'dimensions' of transpose takes a list of integers, found '{0.5}'",
+            ),
+            (
+                'concatenate(%In0), dimensions={0,1}',
+                "column 55: 'dimensions' of concatenate takes a list of one integer, found '{0,1}'",
+            ),
+            (
+                'slice(%In0), slice={0,4}',
+                "column 44: 'slice' of slice takes a list of ranges, found '{0,4}'",
+            ),
+            (
+                'cholesky(%In0), lower=1',
+                "column 47: 'lower' of cholesky takes true or false, found '1'",
+            ),
+            (
+                'compare(%In0, %In0), direction=lt',
+                "column 56: 'direction' of compare takes one of EQ, NE, GE, GT, LE, LT, found 'lt'",
+            ),
+            (
+                'batch_norm_inference('
+                + ', '.join(['%In0'] * 5)
+                + '), epsilon=small, feature_index=0',
+                "column 85: 'epsilon' of batch_norm_inference takes a number, found 'small'",
+            ),
+        ],
+        ids=[
+            'integer',
+            'list',
+            'list_of_decimals',
+            'list_of_one',
+            'ranges',
+            'boolean',
+            'word',
+            'number',
+        ],
+    )
+    def test_malformed_attribute_fails(self, line, message):
+        with pytest.raises(SyntaxError, match=re.escape(f't: semantics line 3, {message}')):
+            parse(spec(f'ROOT %Out0 = f32[4] {line};'))

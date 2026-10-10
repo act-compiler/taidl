@@ -9,6 +9,7 @@ from antlr4.error.ErrorListener import ErrorListener
 
 from .data_model import DataModel
 from .antlr4 import IDLV2Lexer, IDLV2Parser
+from .operations import check_operations
 
 
 class SyntaxErrors(ErrorListener):
@@ -201,19 +202,21 @@ class Instruction:
             raise SyntaxError(
                 f'{self.instruction}: semantics needs exactly one ROOT, found {roots}'
             )
+        # Each line takes what its word's row gives
+        fault = check_operations(tree)
+        if fault:
+            token, message = fault
+            raise SyntaxError(
+                f'{self.instruction}: semantics line {token.line}, column {token.column + 1}: '
+                f'{message}'
+            )
         # Input k enters as %In<k>, declared by parameter(k) alone
         for line in tree.instruction():
             name = line.IDENTIFIER().getSymbol()
             operation = line.OPERATION().getText()
             if operation == 'parameter':
-                # One integer operand, the input's number
-                text = line.operands().getText() if line.operands() else ''
-                if not re.fullmatch(r'\d+', text):
-                    word = line.OPERATION().getSymbol()
-                    raise SyntaxError(
-                        f'{self.instruction}: semantics line {word.line}, column {word.column + 1}: '
-                        f"parameter({text}) needs one integer, the input's number"
-                    )
+                # Its one integer operand, the input's number
+                text = line.operands().getText()
                 number = int(text)
                 if name.text != f'%In{number}':
                     raise SyntaxError(
