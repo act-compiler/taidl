@@ -24,8 +24,8 @@ instr.set_inputs([['d0', ['@a.addr_in'], ['@c.n * 128']]])  # u8[@c.n * 128]
 instr.set_outputs([['d1', ['@a.addr_out'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.add_semantics("""
 ENTRY load_01 {
-    %In1 = u8[`@c.n * 128`] parameter(0);
-    %a = u8[`@c.n`,64,2] reshape(%In1);
+    %In0 = u8[`@c.n * 128`] parameter(0);
+    %a = u8[`@c.n`,64,2] reshape(%In0);
     ROOT %Out0 = bf16[`@c.n`,64] bitcast_convert(%a);
 }
 """)
@@ -37,8 +37,8 @@ instr.set_inputs([['d0', ['@a.addr_in'], ['@c.n * 128']]])  # u8[@c.n * 128]
 instr.set_outputs([['d3', ['@a.addr_out'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.add_semantics("""
 ENTRY load_03 {
-    %In1 = u8[`@c.n * 128`] parameter(0);
-    %a = u8[`@c.n`,64,2] reshape(%In1);
+    %In0 = u8[`@c.n * 128`] parameter(0);
+    %a = u8[`@c.n`,64,2] reshape(%In0);
     ROOT %Out0 = bf16[`@c.n`,64] bitcast_convert(%a);
 }
 """)
@@ -50,8 +50,8 @@ instr.set_inputs([['d1', ['@a.addr_in'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.set_outputs([['d0', ['@a.addr_out'], ['@c.n * 128']]])  # u8[@c.n * 128]
 instr.add_semantics("""
 ENTRY store_10 {
-    %In1 = bf16[`@c.n`,64] parameter(0);
-    %a = u8[`@c.n`,64,2] bitcast_convert(%In1);
+    %In0 = bf16[`@c.n`,64] parameter(0);
+    %a = u8[`@c.n`,64,2] bitcast_convert(%In0);
     ROOT %Out0 = u8[`@c.n*128`] reshape(%a);
 }
 """)
@@ -62,8 +62,8 @@ instr.set_inputs([['d3', ['@a.addr_in'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.set_outputs([['d0', ['@a.addr_out'], ['@c.n * 128']]])  # u8[@c.n * 128]
 instr.add_semantics("""
 ENTRY store_30 {
-    %In1 = bf16[`@c.n`,64] parameter(0);
-    %a = u8[`@c.n`,64,2] bitcast_convert(%In1);
+    %In0 = bf16[`@c.n`,64] parameter(0);
+    %a = u8[`@c.n`,64,2] bitcast_convert(%In0);
     ROOT %Out0 = u8[`@c.n*128`] reshape(%a);
 }
 """)
@@ -74,8 +74,8 @@ instr.set_inputs([['d1', ['@a.addr_in'], ['64']]])  # bf16[@c.n, 64]
 instr.set_outputs([['d3', ['@a.addr_out'], ['64']]])  # bf16[64, @c.n]
 instr.add_semantics("""
 ENTRY transpose_13 {
-    %In1 = bf16[64,64] parameter(0);
-    %a = bf16[64,64] transpose(%In1), dimensions={1,0};
+    %In0 = bf16[64,64] parameter(0);
+    %a = bf16[64,64] transpose(%In0), dimensions={1,0};
     ROOT %Out0 = bf16[64, 64] copy(%a);
 }
 """)
@@ -86,8 +86,8 @@ instr.set_inputs([['d2', ['@a.addr_in'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.set_outputs([['d1', ['@a.addr_out'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.add_semantics("""
 ENTRY mov_21 {
-    %In1 = bf16[`@c.n`,64] parameter(0);
-    ROOT %Out0 = bf16[`@c.n`,64] copy(%In1);
+    %In0 = bf16[`@c.n`,64] parameter(0);
+    ROOT %Out0 = bf16[`@c.n`,64] copy(%In0);
 }
 """)
 
@@ -97,8 +97,8 @@ instr.set_inputs([['d2', ['@a.addr_in'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.set_outputs([['d3', ['@a.addr_out'], ['@c.n']]])  # bf16[@c.n, 64] (ignore last 64 columns)
 instr.add_semantics("""
 ENTRY mov_23 {
-    %In1 = bf16[`@c.n`,64] parameter(0);
-    ROOT %Out0 = bf16[`@c.n`,64] copy(%In1);
+    %In0 = bf16[`@c.n`,64] parameter(0);
+    ROOT %Out0 = bf16[`@c.n`,64] copy(%In0);
 }
 """)
 
@@ -108,9 +108,9 @@ instr.set_inputs([['d3', ['@a.addr_1'], ['64']], ['d3', ['@a.addr_2'], ['64']]])
 instr.set_outputs([['d2', ['@a.addr_out'], ['64']]])  # bf16[64, 64]
 instr.add_semantics("""
 ENTRY gemm_33 {
-    %In1 = bf16[64,64] parameter(0);
-    %In2 = bf16[64,64] parameter(1);
-    ROOT %Out0 = bf16[64,64] dot(%In1, %In2), lhs_contracting_dims={1}, rhs_contracting_dims={0};
+    %In0 = bf16[64,64] parameter(0);
+    %In1 = bf16[64,64] parameter(1);
+    ROOT %Out0 = bf16[64,64] dot(%In0, %In1), lhs_contracting_dims={1}, rhs_contracting_dims={0};
 }
 """)
 
@@ -120,9 +120,9 @@ instr.set_inputs([['d1', ['@a.addr_1'], ['64']], ['d3', ['@a.addr_2'], ['64']]])
 instr.set_outputs([['d2', ['@a.addr_out'], ['64']]])  # bf16[64, 64]
 instr.add_semantics("""
 ENTRY gemm_13 {
-    %In1 = bf16[64,64] parameter(0);
-    %In2 = bf16[64,64] parameter(1);
-    ROOT %Out0 = bf16[64,64] dot(%In1, %In2), lhs_contracting_dims={1}, rhs_contracting_dims={0};
+    %In0 = bf16[64,64] parameter(0);
+    %In1 = bf16[64,64] parameter(1);
+    ROOT %Out0 = bf16[64,64] dot(%In0, %In1), lhs_contracting_dims={1}, rhs_contracting_dims={0};
 }
 """)
 
@@ -132,8 +132,8 @@ instr.set_inputs([['d2', ['@a.addr'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.set_outputs([['d2', ['@a.addr'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.add_semantics("""
 ENTRY softmax {
-    %In1 = bf16[`@c.n`,64] parameter(0);
-    %a = bf16[`@c.n`,64] exponential(%In1);
+    %In0 = bf16[`@c.n`,64] parameter(0);
+    %a = bf16[`@c.n`,64] exponential(%In0);
     %reduced = bf16[`@c.n`] reduce_add(%a), dimensions={1};
     %b = bf16[`@c.n`,64] broadcast(%reduced), dimensions={0};
     ROOT %Out0 = bf16[`@c.n`,64] divide(%a, %b);
