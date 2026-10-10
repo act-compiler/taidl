@@ -107,6 +107,17 @@ class Instruction:
                     f'{self.instruction}: semantics line {name.line}, column {name.column + 1}: '
                     f"'{name.text}' is declared by parameter({name.text[3:]}), not by {operation}"
                 )
+        # ROOT is on the last output, the highest %Out<k>
+        outputs = [line.IDENTIFIER().getText() for line in tree.instruction()]
+        outputs = [name for name in outputs if re.fullmatch(r'%Out\d+', name)]
+        last = max(outputs, key=lambda name: int(name[4:]), default='%Out0')
+        root = next(line for line in tree.instruction() if line.ROOT())
+        mark = root.ROOT().getSymbol()
+        if root.IDENTIFIER().getText() != last:
+            raise SyntaxError(
+                f'{self.instruction}: semantics line {mark.line}, column {mark.column + 1}: '
+                f"ROOT is on '{root.IDENTIFIER().getText()}', not on the last output '{last}'"
+            )
         return tree
 
     def add_constraints(self, constraints: str):

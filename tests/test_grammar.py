@@ -63,6 +63,34 @@ class TestRoot:
         ):
             parse(spec(*lines))
 
+    def test_root_on_the_last_of_several_outputs(self):
+        tree = parse(
+            spec(
+                '%Out1 = f32[4] negate(%In0);',
+                '%Out0 = f32[4] copy(%In0);',
+                'ROOT %Out2 = f32[4] add(%Out0, %Out1);',
+            )
+        )
+        assert tree.instruction(3).ROOT() is not None
+
+    @pytest.mark.parametrize(
+        'lines, message',
+        [
+            (
+                ['%Out0 = f32[4] copy(%In0);', 'ROOT %a = f32[4] negate(%Out0);'],
+                "line 4, column 5: ROOT is on '%a', not on the last output '%Out0'",
+            ),
+            (
+                ['ROOT %Out0 = f32[4] copy(%In0);', '%Out1 = f32[4] negate(%In0);'],
+                "line 3, column 5: ROOT is on '%Out0', not on the last output '%Out1'",
+            ),
+        ],
+        ids=['not_an_output', 'not_the_last_output'],
+    )
+    def test_root_elsewhere_fails(self, lines, message):
+        with pytest.raises(SyntaxError, match=re.escape(f't: semantics {message}')):
+            parse(spec(*lines))
+
 
 class TestInputs:
     def test_inputs_count_from_zero(self):
