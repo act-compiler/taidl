@@ -29,7 +29,12 @@ ENTRY    : 'ENTRY' ;
 ROOT     : 'ROOT' ;
 
 // Element types, spelled as XLA-HLO text spells them
-TYPE     : 'pred' | 's8' | 's16' | 's32' | 'u8' | 'u16' | 'u32' | 'f16' | 'bf16' | 'f32' ;
+TYPE
+    : 'pred'
+    | 's2' | 's4' | 's8' | 's16' | 's32' | 's64'
+    | 'u2' | 'u4' | 'u8' | 'u16' | 'u32' | 'u64'
+    | 'f8e4m3fn' | 'f8e5m2' | 'f16' | 'bf16' | 'f32' | 'f64'
+    ;
 
 // Operations as XLA-HLO names them; reduce_<reducer> is TAIDL's own
 OPERATION

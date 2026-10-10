@@ -54,7 +54,7 @@ FAMILIES = {
 }
 OPERATIONS = ' '.join(FAMILIES.values()).split()
 
-TYPES = ['s8', 's16', 's32', 'u8', 'u16', 'u32', 'f32', 'f16', 'bf16', 'pred']
+TYPES = 'pred s2 s4 s8 s16 s32 s64 u2 u4 u8 u16 u32 u64 f8e4m3fn f8e5m2 f16 bf16 f32 f64'.split()
 
 
 class TestWords:
@@ -72,9 +72,12 @@ class TestWords:
         with pytest.raises(SyntaxError):
             parse(spec(f'ROOT %Out0 = f32[4] {op}(%In1);'))
 
-    def test_type_outside_the_list_fails(self):
+    @pytest.mark.parametrize(
+        'typ', ['c64', 'f8e4m3', 'f8e5m2fnuz'], ids=['unlisted', 'shorter_name', 'longer_name']
+    )
+    def test_type_outside_the_list_fails(self, typ):
         with pytest.raises(SyntaxError):
-            parse(spec('ROOT %Out0 = f64[4] convert(%In1);'))
+            parse(spec(f'ROOT %Out0 = {typ}[4] convert(%In1);'))
 
     @pytest.mark.parametrize('typ', TYPES)
     def test_type(self, typ):
