@@ -36,22 +36,31 @@ OPERATION
     // Inputs and constants
     : 'parameter' | 'constant' | 'iota'
     // Elementwise arithmetic
-    | 'abs' | 'negate' | 'sign' | 'add' | 'subtract' | 'multiply' | 'divide'
-    | 'maximum' | 'minimum' | 'power' | 'sqrt' | 'rsqrt' | 'exponential'
-    | 'log' | 'log_plus_one' | 'logistic' | 'tanh' | 'sine' | 'round_nearest_even'
-    // Logic and shifts
-    | 'and' | 'or' | 'xor' | 'shift_left' | 'shift_right_logical' | 'shift_right_arithmetic'
+    | 'abs' | 'negate' | 'sign' | 'add' | 'subtract' | 'multiply' | 'mulhi' | 'divide'
+    | 'remainder' | 'maximum' | 'minimum' | 'power' | 'sqrt' | 'rsqrt' | 'cbrt'
+    // Transcendental functions
+    | 'exponential' | 'exponential_minus_one' | 'log' | 'log_plus_one' | 'logistic' | 'erf'
+    | 'sine' | 'cosine' | 'tan' | 'asin' | 'acos' | 'atan2'
+    | 'sinh' | 'cosh' | 'tanh' | 'asinh' | 'acosh' | 'atanh'
+    // Rounding
+    | 'floor' | 'ceil' | 'round_nearest_afz' | 'round_nearest_even'
+    // Logic and bits
+    | 'and' | 'or' | 'xor' | 'not' | 'shift_left' | 'shift_right_logical' | 'shift_right_arithmetic'
+    | 'popcnt' | 'count_leading_zeros'
     // Comparison and selection
-    | 'compare' | 'select' | 'clamp'
+    | 'compare' | 'select' | 'clamp' | 'is_finite'
     // Type conversion
-    | 'convert' | 'bitcast_convert'
+    | 'convert' | 'bitcast_convert' | 'reduce_precision'
     // Shape and movement
-    | 'reshape' | 'transpose' | 'broadcast' | 'concatenate' | 'slice'
-    | 'dynamic_update_slice' | 'gather' | 'copy'
-    // Contraction
-    | 'dot'
+    | 'reshape' | 'transpose' | 'broadcast' | 'concatenate' | 'pad' | 'reverse' | 'slice'
+    | 'dynamic_slice' | 'dynamic_update_slice' | 'gather' | 'copy'
+    // Linear algebra
+    | 'dot' | 'cholesky' | 'triangular_solve'
+    // Normalization
+    | 'batch_norm_inference'
     // Reduction
-    | 'reduce_add' | 'reduce_max' | 'reduce_min' | 'reduce_and' | 'reduce_or'
+    | 'reduce_add' | 'reduce_multiply' | 'reduce_max' | 'reduce_min'
+    | 'reduce_and' | 'reduce_or' | 'reduce_xor'
     ;
 
 // Symbols
