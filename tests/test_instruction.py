@@ -23,7 +23,7 @@ def two_inputs():
 def semantics(*parameters):
     lines = [f'%In{k} = s8[1,16] parameter({k});' for k in parameters]
     return (
-        'ENTRY t {\n'
+        'ENTRY {\n'
         + ''.join(f'    {line}\n' for line in lines)
         + '    ROOT %Out0 = s8[1,16] copy(%In0);\n}\n'
     )
@@ -61,7 +61,7 @@ class TestValues:
     def test_output_value_without_its_region_fails(self):
         instr = make().add_instruction('t', [], ['x'])
         instr.add_semantics(
-            'ENTRY t {\n'
+            'ENTRY {\n'
             '    %In0 = s8[1,16] parameter(0);\n'
             '    %Out0 = s8[1,16] copy(%In0);\n'
             '    ROOT %Out1 = s8[1,16] negate(%In0);\n'

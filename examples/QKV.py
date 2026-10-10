@@ -21,7 +21,7 @@ instr = qkv.add_instruction('load_rm', ['n'], ['addr_in', 'addr_out'])
 instr.set_inputs([['d0', ['@a.addr_in'], ['@c.n * 128']]])  # u8[@c.n * 128]
 instr.set_outputs([['d1', ['@a.addr_out'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.add_semantics("""
-ENTRY load_rm {
+ENTRY {
     %In0 = u8[`@c.n * 128`] parameter(0);
     %a = u8[`@c.n`,64,2] reshape(%In0);
     ROOT %Out0 = bf16[`@c.n`,64] bitcast_convert(%a);
@@ -33,7 +33,7 @@ instr = qkv.add_instruction('load_cm', ['n'], ['addr_in', 'addr_out'])
 instr.set_inputs([['d0', ['@a.addr_in'], ['@c.n * 128']]])  # u8[@c.n * 128]
 instr.set_outputs([['d1', ['@a.addr_out'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.add_semantics("""
-ENTRY load_cm {
+ENTRY {
     %In0 = u8[`@c.n * 128`] parameter(0);
     %a = u8[`@c.n`,64,2] reshape(%In0);
     %b = bf16[`@c.n`,64] bitcast_convert(%a);
@@ -46,7 +46,7 @@ instr = qkv.add_instruction('store_rm', ['n'], ['addr_in', 'addr_out'])
 instr.set_inputs([['d1', ['@a.addr_in'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.set_outputs([['d0', ['@a.addr_out'], ['@c.n * 128']]])  # u8[@c.n * 128]
 instr.add_semantics("""
-ENTRY store_rm {
+ENTRY {
     %In0 = bf16[`@c.n`,64] parameter(0);
     %a = u8[`@c.n`,64,2] bitcast_convert(%In0);
     ROOT %Out0 = u8[`@c.n*128`] reshape(%a);
@@ -58,7 +58,7 @@ instr = qkv.add_instruction('store_cm', ['n'], ['addr_in', 'addr_out'])
 instr.set_inputs([['d1', ['@a.addr_in'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.set_outputs([['d0', ['@a.addr_out'], ['@c.n * 128']]])  # u8[@c.n * 128]
 instr.add_semantics("""
-ENTRY store_cm {
+ENTRY {
     %In0 = bf16[`@c.n`,64] parameter(0);
     %a = bf16[64,`@c.n`] transpose(%In0), dimensions={1,0};
     %b = u8[64,`@c.n`,2] bitcast_convert(%a);
@@ -71,7 +71,7 @@ instr = qkv.add_instruction('mov', ['n'], ['addr_in', 'addr_out'])
 instr.set_inputs([['d2', ['@a.addr_in'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.set_outputs([['d1', ['@a.addr_out'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.add_semantics("""
-ENTRY mov {
+ENTRY {
     %In0 = bf16[`@c.n`,64] parameter(0);
     ROOT %Out0 = bf16[`@c.n`,64] copy(%In0);
 }
@@ -82,7 +82,7 @@ instr = qkv.add_instruction('gemm', [], ['addr_1', 'addr_2', 'addr_out'])
 instr.set_inputs([['d1', ['@a.addr_1'], ['64']], ['d1', ['@a.addr_2'], ['64']]])
 instr.set_outputs([['d2', ['@a.addr_out'], ['64']]])  # bf16[64, 64]
 instr.add_semantics("""
-ENTRY gemm {
+ENTRY {
     %In0 = bf16[64,64] parameter(0);
     %In1 = bf16[64,64] parameter(1);
     ROOT %Out0 = bf16[64,64] dot(%In0, %In1), lhs_contracting_dims={1}, rhs_contracting_dims={0};
@@ -94,7 +94,7 @@ instr = qkv.add_instruction('softmax', ['n'], ['addr'])
 instr.set_inputs([['d2', ['@a.addr'], ['@c.n']]])
 instr.set_outputs([['d2', ['@a.addr'], ['@c.n']]])  # In-place operation
 instr.add_semantics("""
-ENTRY softmax {
+ENTRY {
     %In0 = bf16[`@c.n`,64] parameter(0);
     %a = bf16[`@c.n`,64] exponential(%In0);
     %reduced = bf16[`@c.n`] reduce_add(%a), dimensions={1};

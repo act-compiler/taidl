@@ -18,9 +18,9 @@ def parse(semantics):
     return instr.instr_semantics_ast
 
 
-def spec(*lines, entry='t'):
+def spec(*lines):
     return (
-        f'ENTRY {entry} {{\n    %In0 = f32[4] parameter(0);\n'
+        'ENTRY {\n    %In0 = f32[4] parameter(0);\n'
         + ''.join(f'    {line}\n' for line in lines)
         + '}\n'
     )
@@ -86,7 +86,7 @@ class TestStrict:
             parse(spec('ROOT %Out0 = f32[4] copy(%In0);') + '}')
 
     @pytest.mark.parametrize(
-        'text', ['', '  \n', 'ENTRY t {\n}\n'], ids=['empty', 'blank', 'no_line']
+        'text', ['', '  \n', 'ENTRY {\n}\n'], ids=['empty', 'blank', 'no_line']
     )
     def test_semantics_with_no_line_fails(self, text):
         with pytest.raises(SyntaxError, match='t: semantics line'):
@@ -294,16 +294,11 @@ class TestShapes:
 
 
 class TestEntry:
-    def test_identifier_name(self):
-        tree = parse(spec('ROOT %Out0 = f32[4] copy(%In0);'))
-        assert tree.name().getText() == 't'
-        assert tree.name().IDENTIFIER() is not None
-
-    @pytest.mark.parametrize('op', ['copy', 'and', 'reduce_add'])
-    def test_operation_name(self, op):
-        tree = parse(spec('ROOT %Out0 = f32[4] copy(%In0);', entry=op))
-        assert tree.name().getText() == op
-        assert tree.name().OPERATION() is not None
+    def test_name_fails(self):
+        with pytest.raises(
+            SyntaxError, match="t: semantics line 1, column 7: extraneous input 't'"
+        ):
+            parse('ENTRY t {\n    %In0 = f32[4] parameter(0);\n    ' + COPY + '\n}\n')
 
 
 class TestAttributes:
