@@ -39,6 +39,12 @@ class Accelerator:
 
     def add_initial_state(self, name: str, value: int) -> None:
         """Declare a machine state variable, @s.<name>, with its initial value."""
+        # State belongs with the data models
+        if self.instructions:
+            raise ValueError(
+                f"state '{name}' follows an instruction: "
+                'state is declared with the data models, before the instructions'
+            )
         self.state.append(State(name, value))
 
     def add_instruction(

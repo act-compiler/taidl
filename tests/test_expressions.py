@@ -218,3 +218,15 @@ class TestUpdates:
     def test_update_fails(self, text, message):
         with pytest.raises(SyntaxError, match=re.escape(f"t: update '{text}' {message}")):
             instruction(update=[text])
+
+
+class TestDeclaredNames:
+    def test_state_declared_after_an_instruction_fails(self):
+        acc = make()
+        acc.add_instruction('u', [], [])
+        message = (
+            "state 'busy' follows an instruction: "
+            'state is declared with the data models, before the instructions'
+        )
+        with pytest.raises(ValueError, match=re.escape(message)):
+            acc.add_initial_state('busy', 0)
