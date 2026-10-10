@@ -19,7 +19,7 @@ class SyntaxErrors(ErrorListener):
         self.found = []
 
     def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
-        self.found.append(f'line {line}, column {column + 1}: {msg}')
+        self.found.append((line, column + 1, msg))
 
 
 @dataclass
@@ -176,18 +176,12 @@ class Instruction:
 
     def parse_semantics(self, semantics: str):
         """Parse semantics into AST eagerly to catch syntax errors early"""
-        input_stream = InputStream(semantics)
-        lexer = IDLV2Lexer(input_stream)
-        stream = CommonTokenStream(lexer)
-        parser = IDLV2Parser(stream)
-        # Collect syntax errors rather than print them
-        errors = SyntaxErrors()
-        for recognizer in (lexer, parser):
-            recognizer.removeErrorListeners()
-            recognizer.addErrorListener(errors)
-        tree = parser.module()
-        if errors.found:
-            raise SyntaxError(f'{self.instruction}: semantics {errors.found[0]}')
+        tree, errors = parse(IDLV2Lexer, IDLV2Parser, 'module', semantics)
+        if errors:
+            line, column, message = errors[0]
+            raise SyntaxError(
+                f'{self.instruction}: semantics line {line}, column {column}: {message}'
+            )
         # A line names its value with a leading %
         for line in tree.instruction():
             name = line.IDENTIFIER().getSymbol()
@@ -246,6 +240,18 @@ class Instruction:
         self.constraints = self.constraints + strings(
             self.instruction, 'add_constraints', constraints
         )
+
+
+def parse(lexer_class, parser_class, rule: str, text: str):
+    """The tree of a text by one entry rule of a grammar, and its syntax errors."""
+    lexer = lexer_class(InputStream(text))
+    parser = parser_class(CommonTokenStream(lexer))
+    # Collect syntax errors rather than print them
+    errors = SyntaxErrors()
+    for recognizer in (lexer, parser):
+        recognizer.removeErrorListeners()
+        recognizer.addErrorListener(errors)
+    return getattr(parser, rule)(), errors.found
 
 
 def strings(instruction: str, what: str, given: Sequence[str]) -> List[str]:
