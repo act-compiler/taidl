@@ -14,7 +14,7 @@ TAIDL is published in [MICRO 2025](https://doi.org/10.1145/3725843.3756075). For
 TAIDL needs Python 3.14 or later.
 
 ```bash
-pip install git+https://github.com/act-compiler/taidl.git@v2.5
+pip install git+https://github.com/act-compiler/taidl.git@v2.6
 ```
 
 For development:
