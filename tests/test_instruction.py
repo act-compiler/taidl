@@ -61,6 +61,7 @@ class TestFreshLists:
     )
     def test_fresh_list_per_instruction(self, field, line):
         acc = make()
+        acc.add_initial_state('busy', 0)
         given = [line]
         getattr(acc.add_instruction('a', [], ['x'], **{field: given}), field).append(line)
         getattr(acc.add_instruction('b', [], ['x']), field).append(line)

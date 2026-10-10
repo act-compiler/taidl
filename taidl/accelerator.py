@@ -63,6 +63,7 @@ class Accelerator:
             constraints,
             update,
             self.data_model,
+            self.state,
         )
         self.instructions.append(new_instruction)
         return new_instruction
