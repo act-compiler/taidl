@@ -8,7 +8,15 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
 
@@ -17,7 +25,7 @@ jobs:
 
       - name: Pull or build Docker image
         run: |
-          if ! docker pull devanshdvj/act-env:${ACT_ENV_TAG}-amd64 2>/dev/null; then
+          if ! docker pull devanshdvj/act-env:${ACT_ENV_TAG}-${{ matrix.arch }} 2>/dev/null; then
             echo "Pull failed, building from source..."
             git clone $ACT_GITHUB_REPO /tmp/act
             cd /tmp/act && git checkout $ACT_GITHUB_TAG
