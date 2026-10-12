@@ -9,4 +9,5 @@ Each of the four is a list of strings, and one string in place of a list raises 
 `set_no_partial_overlap` appends one constraint per marked input and per addressed dimension whose starts are spelled differently: the starts there are equal, or the output lies apart from it.
 Starts are compared as parsed, so spacing never makes two differ.
 Each of the two, given again, replaces the constraints it appended before.
+`set_inputs` and `set_outputs` each drop the constraints these two calls appended, so a mark is given after the regions it reads.
 `add_initial_state(name, value)` declares a machine state variable with its initial value, an integer, any other value raising `ValueError`; an expression reads it as `@s.<name>`, and an instruction's `update` lines say how it changes, as in `@s.<name> = 1`.

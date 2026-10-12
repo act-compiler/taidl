@@ -289,6 +289,23 @@ class KeepOff:
         with pytest.raises(ValueError, match=f't: {self.method} marks an input outside d1'):
             self.mark(instr, [True])
 
+    @pytest.mark.parametrize('setter', ['set_inputs', 'set_outputs'])
+    def test_new_regions_drop_its_constraints(self, setter):
+        instr = two_inputs()
+        instr.add_constraints(['@a.x >= 0'])
+        self.mark(instr, [True, True])
+        instr.add_constraints(['@a.o >= 0'])
+        assert len(instr.constraints) == 4
+        getattr(instr, setter)([['d1', ['@a.y'], ['1']]])
+        assert instr.constraints == ['@a.x >= 0', '@a.o >= 0']
+        assert [tree.getText() for tree in instr.constraint_asts] == ['@a.x>=0', '@a.o>=0']
+        # The regions given again, the mark writes from them
+        instr.set_inputs([['d1', ['@a.x'], ['1']]])
+        instr.set_outputs([['d1', ['@a.o'], ['1']]])
+        self.mark(instr, [True])
+        assert len(instr.constraints) == 3
+        assert '@a.y' not in instr.constraints[2]
+
     def test_given_again_replaces_its_constraints(self):
         instr, once = two_inputs(), two_inputs()
         instr.add_constraints(['@a.x >= 0'])

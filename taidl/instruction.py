@@ -100,6 +100,7 @@ class Instruction:
             self.check_values(self.instr_semantics_ast, 'input', inputs)
         self.instr_inputs, self.instr_input_asts = list(inputs), trees
         self.inplace = [False] * len(inputs)
+        self.drop_marks()
         self.inputs_given = True
 
     def set_outputs(self, outputs: Sequence[Region]):
@@ -108,6 +109,7 @@ class Instruction:
         if self.instr_semantics_ast is not None:
             self.check_values(self.instr_semantics_ast, 'output', outputs)
         self.instr_outputs, self.instr_output_asts = list(outputs), trees
+        self.drop_marks()
         self.outputs_given = True
 
     def check_regions(self, regions: Sequence[Region]):
@@ -222,6 +224,11 @@ class Instruction:
         first = len(self.constraints)
         self.append_constraints(written)
         self.placed[method] = self.constraint_asts[first:]
+
+    def drop_marks(self):
+        """Drop every placement mark, the regions it was written from being replaced."""
+        for method in list(self.placed):
+            self.drop_placed(method)
 
     def drop_placed(self, method: str):
         """Drop the constraints a placement mark appended."""
