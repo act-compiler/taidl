@@ -289,6 +289,25 @@ class KeepOff:
         with pytest.raises(ValueError, match=f't: {self.method} marks an input outside d1'):
             self.mark(instr, [True])
 
+    def test_given_again_replaces_its_constraints(self):
+        instr, once = two_inputs(), two_inputs()
+        instr.add_constraints(['@a.x >= 0'])
+        self.mark(instr, [True, True])
+        instr.add_constraints(['@a.o >= 0'])
+        self.mark(instr, [True, False])
+        self.mark(once, [True, False])
+        assert instr.constraints == ['@a.x >= 0', '@a.o >= 0'] + once.constraints
+        assert len(instr.constraint_asts) == len(instr.constraints)
+        self.mark(instr, [False, False])
+        assert instr.constraints == ['@a.x >= 0', '@a.o >= 0']
+
+    def test_refused_mark_changes_nothing(self):
+        instr = two_inputs()
+        instr.set_inplace([False, True])
+        with pytest.raises(ValueError, match=f't: {self.method} marks an input also in place'):
+            self.mark(instr, [True, True])
+        assert instr.constraints == []
+
 
 # An input's start and the output's, alike once parsed
 SAME_STARTS = [('@a.x', '@a.x'), ('@a.x+1', '@a.x + 1'), (0, '0')]

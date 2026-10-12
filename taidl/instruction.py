@@ -51,6 +51,8 @@ class Instruction:
     instr_output_asts: list[RegionTrees]
     instr_expression_asts: dict[TerminalNode, IDLV2ExprParser.ExpressionContext]
     inplace: List[bool]
+    # The trees of the constraints each placement mark appended
+    placed: dict[str, list[IDLV2ExprParser.ConditionContext]]
     inputs_given: bool
     outputs_given: bool
 
@@ -80,7 +82,7 @@ class Instruction:
         self.instr_inputs, self.instr_input_asts = [], []
         self.instr_outputs, self.instr_output_asts = [], []
         self.instr_semantics_ast, self.instr_expression_asts = None, {}
-        self.inplace = []
+        self.inplace, self.placed = [], {}
         # Which of set_inputs and set_outputs has run
         self.inputs_given = False
         self.outputs_given = False
@@ -188,6 +190,7 @@ class Instruction:
             raise ValueError(f'{name}: {method} needs one flag per input')
         out_buffer, out_starts, out_sizes = self.instr_outputs[0]
         out_trees = self.instr_output_asts[0][1]
+        written = []
         inputs = zip(flags, self.inplace, self.instr_inputs, self.instr_input_asts)
         for flag, inplace, (buffer, starts, sizes), (_, trees, _) in inputs:
             if not flag:
@@ -209,11 +212,23 @@ class Instruction:
             apart = ' or '.join(sides)
             if whole:
                 # Or wholly over it: equal starts in each such dim
-                self.append_constraints([f'{equal} or {apart}' for equal in equals])
+                written += [f'{equal} or {apart}' for equal in equals]
             elif sides:
-                self.append_constraints([apart])
+                written.append(apart)
             else:
                 raise ValueError(f"{name}: {method} marks an input at the output's own starts")
+        # Given again, a mark replaces what it appended before
+        self.drop_placed(method)
+        first = len(self.constraints)
+        self.append_constraints(written)
+        self.placed[method] = self.constraint_asts[first:]
+
+    def drop_placed(self, method: str):
+        """Drop the constraints a placement mark appended."""
+        for tree in self.placed.pop(method, []):
+            position = self.constraint_asts.index(tree)
+            del self.constraints[position]
+            del self.constraint_asts[position]
 
     def add_semantics(self, semantics: str):
         tree = self.parse_semantics(semantics)
