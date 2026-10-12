@@ -282,6 +282,18 @@ class KeepOff:
         with pytest.raises(ValueError, match=f't: {self.method} marks an input also in place'):
             self.mark(instr, [False, True])
 
+    def test_inplace_after_the_mark_refused(self):
+        instr = two_inputs()
+        self.mark(instr, [False, True])
+        message = f't: set_inplace marks an input also marked by {self.method}'
+        with pytest.raises(ValueError, match=message):
+            instr.set_inplace([False, True])
+        instr.set_inplace([True, False])
+        assert instr.inplace == [True, False]
+        # The mark withdrawn, its input may be in place
+        self.mark(instr, [False, False])
+        instr.set_inplace([False, True])
+
     def test_same_buffer(self):
         instr = make().add_instruction('t', [], ['x', 'o'])
         instr.set_inputs([['d0', ['@a.x'], ['1']]])

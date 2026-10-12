@@ -51,6 +51,8 @@ class Instruction:
     instr_output_asts: list[RegionTrees]
     instr_expression_asts: dict[TerminalNode, IDLV2ExprParser.ExpressionContext]
     inplace: List[bool]
+    # Each placement mark's flags, by its method's name
+    marks: dict[str, list[bool]]
     # The trees of the constraints each placement mark appended
     placed: dict[str, list[IDLV2ExprParser.ConditionContext]]
     inputs_given: bool
@@ -82,7 +84,7 @@ class Instruction:
         self.instr_inputs, self.instr_input_asts = [], []
         self.instr_outputs, self.instr_output_asts = [], []
         self.instr_semantics_ast, self.instr_expression_asts = None, {}
-        self.inplace, self.placed = [], {}
+        self.inplace, self.marks, self.placed = [], {}, {}
         # Which of set_inputs and set_outputs has run
         self.inputs_given = False
         self.outputs_given = False
@@ -164,6 +166,11 @@ class Instruction:
         """Mark the inputs this instruction overwrites, one flag per input; set_inputs resets them."""
         if len(inplace) != len(self.instr_inputs):
             raise ValueError(f'{self.instruction}: set_inplace needs one flag per input')
+        for method, flags in self.marks.items():
+            if any(flag and mark for flag, mark in zip(inplace, flags)):
+                raise ValueError(
+                    f'{self.instruction}: set_inplace marks an input also marked by {method}'
+                )
         self.inplace = list(inplace)
 
     def set_apart(self, apart: List[bool]):
@@ -223,7 +230,7 @@ class Instruction:
         self.drop_placed(method)
         first = len(self.constraints)
         self.append_constraints(written)
-        self.placed[method] = self.constraint_asts[first:]
+        self.marks[method], self.placed[method] = list(flags), self.constraint_asts[first:]
 
     def drop_marks(self):
         """Drop every placement mark, the regions it was written from being replaced."""
@@ -231,7 +238,8 @@ class Instruction:
             self.drop_placed(method)
 
     def drop_placed(self, method: str):
-        """Drop the constraints a placement mark appended."""
+        """Drop a placement mark: its flags and the constraints it appended."""
+        self.marks.pop(method, None)
         for tree in self.placed.pop(method, []):
             position = self.constraint_asts.index(tree)
             del self.constraints[position]
