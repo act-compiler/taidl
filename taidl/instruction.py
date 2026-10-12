@@ -187,7 +187,9 @@ class Instruction:
         if len(flags) != len(self.instr_inputs):
             raise ValueError(f'{name}: {method} needs one flag per input')
         out_buffer, out_starts, out_sizes = self.instr_outputs[0]
-        for flag, inplace, (buffer, starts, sizes) in zip(flags, self.inplace, self.instr_inputs):
+        out_trees = self.instr_output_asts[0][1]
+        inputs = zip(flags, self.inplace, self.instr_inputs, self.instr_input_asts)
+        for flag, inplace, (buffer, starts, sizes), (_, trees, _) in inputs:
             if not flag:
                 continue
             if inplace:
@@ -196,8 +198,10 @@ class Instruction:
                 raise ValueError(f'{name}: {method} marks an input outside {out_buffer}')
             # Per dim, unlike starts: one ends before the other
             equals, sides = [], []
-            for out_start, out_size, start, size in zip(out_starts, out_sizes, starts, sizes):
-                if str(out_start).strip() == str(start).strip():
+            dims = zip(out_starts, out_sizes, out_trees, starts, sizes, trees)
+            for out_start, out_size, out_tree, start, size, tree in dims:
+                # Starts alike as parsed, whatever their spacing
+                if out_tree.getText() == tree.getText():
                     continue
                 equals.append(f'{term(out_start)} == {term(start)}')
                 sides.append(f'{term(out_start)} + {term(out_size)} <= {term(start)}')

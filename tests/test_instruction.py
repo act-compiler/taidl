@@ -290,6 +290,10 @@ class KeepOff:
             self.mark(instr, [True])
 
 
+# An input's start and the output's, alike once parsed
+SAME_STARTS = [('@a.x', '@a.x'), ('@a.x+1', '@a.x + 1'), (0, '0')]
+
+
 class TestApart(KeepOff):
     method = 'set_apart'
 
@@ -317,10 +321,11 @@ class TestApart(KeepOff):
         instr.set_apart([True])
         assert instr.constraints == ['@a.o + 4 <= @a.x or @a.x + 4 <= @a.o']
 
-    def test_same_starts_refused(self):
+    @pytest.mark.parametrize('start, out_start', SAME_STARTS)
+    def test_same_starts_refused(self, start, out_start):
         instr = make().add_instruction('t', ['n'], ['x'])
-        instr.set_inputs([['d1', ['@a.x'], ['@c.n']]])
-        instr.set_outputs([['d1', ['@a.x'], ['1']]])
+        instr.set_inputs([['d1', [start], ['@c.n']]])
+        instr.set_outputs([['d1', [out_start], ['1']]])
         with pytest.raises(ValueError, match="t: set_apart marks an input at the output's own"):
             instr.set_apart([True])
 
@@ -342,10 +347,11 @@ class TestNoPartialOverlap(KeepOff):
         instr.set_no_partial_overlap([True])
         assert instr.constraints == ['@a.o == @a.x or @a.o + 4 <= @a.x or @a.x + 4 <= @a.o']
 
-    def test_same_starts_add_nothing(self):
+    @pytest.mark.parametrize('start, out_start', SAME_STARTS)
+    def test_same_starts_add_nothing(self, start, out_start):
         instr = make().add_instruction('t', ['n'], ['x'])
-        instr.set_inputs([['d1', ['@a.x'], ['@c.n']]])
-        instr.set_outputs([['d1', ['@a.x'], ['1']]])
+        instr.set_inputs([['d1', [start], ['@c.n']]])
+        instr.set_outputs([['d1', [out_start], ['1']]])
         instr.set_no_partial_overlap([True])
         assert instr.constraints == []
 
