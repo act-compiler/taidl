@@ -1,3 +1,5 @@
+import re
+
 import pytest
 
 from taidl import Accelerator
@@ -13,6 +15,23 @@ class TestDimensions:
         model = acc.data_model[1]
         assert (model.access_dim, model.unit_dim, model.var_dim) == ([8], [4], [8, 4])
         assert model.array_dim_str == "['8','4']"
+
+    @pytest.mark.parametrize(
+        'dimensions, unit_dim', [([128], [64]), ((8, 8), (16, 4)), ([], [16]), ([4], [])]
+    )
+    def test_positive_integers_accepted(self, dimensions, unit_dim):
+        acc = Accelerator('Model', base_dir='.')
+        acc.add_data_model('d1', dimensions, unit_dim, 's8')
+        model = acc.data_model[1]
+        assert (model.access_dim, model.unit_dim) == (list(dimensions), list(unit_dim))
+
+    @pytest.mark.parametrize('what', ['dimensions', 'unit_dim'])
+    @pytest.mark.parametrize('given', [[0], [-8], ['8'], [2.5], [True], (8, None), 8, '8'])
+    def test_refused(self, what, given):
+        sizes = {'dimensions': [4], 'unit_dim': [4], what: given}
+        message = f'd1: {what} {given!r} is not a list of positive integers'
+        with pytest.raises(ValueError, match=re.escape(message)):
+            Accelerator('Model', base_dir='.').add_data_model('d1', var_type='s8', **sizes)
 
 
 class TestTypes:
