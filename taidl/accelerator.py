@@ -56,6 +56,8 @@ class Accelerator:
                 'state is declared with the data models, before the instructions'
             )
         check_name('state', name, taken=[state.name for state in self.state])
+        if type(value) is not int:
+            raise ValueError(f"state '{name}': value {value!r} is not an integer")
         self.state.append(State(name, value))
 
     def add_instruction(
