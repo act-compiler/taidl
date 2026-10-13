@@ -2,25 +2,25 @@ grammar IDLV2;
 
 // === Parser Rules ===
 
-module       : ENTRY IDENTIFIER LBRACE instruction+ RBRACE ;
+module         : ENTRY IDENTIFIER LBRACE instruction+ RBRACE ;
 
-instruction  : (ROOT)? IDENTIFIER EQUAL result_type OPERATION LPAREN operands? RPAREN attributes? SEMICOLON? ;
+instruction    : ROOT? IDENTIFIER EQUAL result_type OPERATION LPAREN operands? RPAREN attributes? SEMICOLON? ;
 
-result_type       : TYPE LBRACKET shape RBRACKET ;
+result_type    : TYPE LBRACKET shape RBRACKET ;
 
-operands     : operand (COMMA operand)* ;
-operand      : value ;
+operands       : operand (COMMA operand)* ;
+operand        : value ;
 
-attributes   : COMMA attribute (COMMA attribute)* ;
-attribute    : IDENTIFIER EQUAL attributeValue ;
+attributes     : COMMA attribute (COMMA attribute)* ;
+attribute      : IDENTIFIER EQUAL attributeValue ;
 
 attributeValue : braceList | sliceList | value ;
-braceList    : LBRACE (value (COMMA value)*)? RBRACE ;
-sliceList    : LBRACE ( LBRACKET value COLON value (COLON value)? RBRACKET (COMMA LBRACKET value COLON value (COLON value)? RBRACKET)*)? RBRACE ;
+braceList      : LBRACE (value (COMMA value)*)? RBRACE ;
+sliceList      : LBRACE ( LBRACKET value COLON value (COLON value)? RBRACKET (COMMA LBRACKET value COLON value (COLON value)? RBRACKET)*)? RBRACE ;
 
-shape : (value) (COMMA (value))*;
+shape          : value (COMMA value)* ;
 
-value : INT | IDENTIFIER | EXPRESSION;
+value          : INT | IDENTIFIER | EXPRESSION ;
 
 // === Lexer Rules ===
 
@@ -28,20 +28,31 @@ value : INT | IDENTIFIER | EXPRESSION;
 ENTRY    : 'ENTRY' ;
 ROOT     : 'ROOT' ;
 
-// Types
-// Probably can just use IDENTIFIER
-TYPE     : 's8' | 's16' | 's32' | 'u8' | 'u16' | 'u32' | 'f32' | 'f16' | 'bf16' | 'pred' ;
+// Element types, spelled as XLA-HLO text spells them
+TYPE     : 'pred' | 's8' | 's16' | 's32' | 'u8' | 'u16' | 'u32' | 'f16' | 'bf16' | 'f32' ;
 
-// Operations (from template.py function_templates)
-OPERATION : 'reshape' | 'convert' | 'copy' | 'concatenate' | 'bitcast_convert'
-          | 'transpose' | 'slice' | 'dot' | 'constant' | 'broadcast' | 'maximum'
-          | 'minimum' | 'xor' | 'add'
-          | 'dynamic_update_slice' | 'subtract' | 'multiply' | 'divide'
-          | 'parameter' | 'reduce_add' | 'exponential' // parameter is special operation for inputs
-          | 'reduce_max' | 'reduce_min' | 'reduce_and' | 'reduce_or' | 'gather' | 'iota'
-          | 'abs' | 'negate' | 'sign' | 'sqrt' | 'rsqrt' | 'log' | 'log_plus_one' | 'logistic'
-          | 'tanh' | 'sine' | 'round_nearest_even' | 'power' | 'clamp' | 'compare' | 'select'
-          | 'and' | 'or' | 'shift_left' | 'shift_right_logical' | 'shift_right_arithmetic';
+// Operations as XLA-HLO names them; reduce_<reducer> is TAIDL's own
+OPERATION
+    // Inputs and constants
+    : 'parameter' | 'constant' | 'iota'
+    // Elementwise arithmetic
+    | 'abs' | 'negate' | 'sign' | 'add' | 'subtract' | 'multiply' | 'divide'
+    | 'maximum' | 'minimum' | 'power' | 'sqrt' | 'rsqrt' | 'exponential'
+    | 'log' | 'log_plus_one' | 'logistic' | 'tanh' | 'sine' | 'round_nearest_even'
+    // Logic and shifts
+    | 'and' | 'or' | 'xor' | 'shift_left' | 'shift_right_logical' | 'shift_right_arithmetic'
+    // Comparison and selection
+    | 'compare' | 'select' | 'clamp'
+    // Type conversion
+    | 'convert' | 'bitcast_convert'
+    // Shape and movement
+    | 'reshape' | 'transpose' | 'broadcast' | 'concatenate' | 'slice'
+    | 'dynamic_update_slice' | 'gather' | 'copy'
+    // Contraction
+    | 'dot'
+    // Reduction
+    | 'reduce_add' | 'reduce_max' | 'reduce_min' | 'reduce_and' | 'reduce_or'
+    ;
 
 // Symbols
 EQUAL    : '=' ;
