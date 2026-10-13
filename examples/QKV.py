@@ -2,24 +2,24 @@
 
 from taidl import Accelerator
 
-qkv = Accelerator("QKV")
+qkv = Accelerator('QKV')
 
 
 # Define Data Models
 
 # d1: 128 rows x 64 columns of bf16
-qkv.add_data_model("d1", [128], [64], "bf16")
+qkv.add_data_model('d1', [128], [64], 'bf16')
 
 # d2: 64 rows x 64 columns of bf16
-qkv.add_data_model("d2", [64], [64], "bf16")
+qkv.add_data_model('d2', [64], [64], 'bf16')
 
 
 # Define Instruction semantics
 
 # (1) load_rm: Loads data from HBM (d0) in row-major format to d1
-instr = qkv.add_instruction("load_rm", ["n"], ["addr_in", "addr_out"])
-instr.set_inputs([["d0", ["@a.addr_in"], ["@c.n * 128"]]])  # u8[@c.n * 128]
-instr.set_outputs([["d1", ["@a.addr_out"], ["@c.n"]]])  # bf16[@c.n, 64]
+instr = qkv.add_instruction('load_rm', ['n'], ['addr_in', 'addr_out'])
+instr.set_inputs([['d0', ['@a.addr_in'], ['@c.n * 128']]])  # u8[@c.n * 128]
+instr.set_outputs([['d1', ['@a.addr_out'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.add_semantics("""
 ENTRY load_rm {
     %In1 = u8[`@c.n * 128`] parameter(0);
@@ -29,9 +29,9 @@ ENTRY load_rm {
 """)
 
 # (2) load_cm: Loads data from HBM (d0) in column-major format to d1 (with transpose)
-instr = qkv.add_instruction("load_cm", ["n"], ["addr_in", "addr_out"])
-instr.set_inputs([["d0", ["@a.addr_in"], ["@c.n * 128"]]])  # u8[@c.n * 128]
-instr.set_outputs([["d1", ["@a.addr_out"], ["@c.n"]]])  # bf16[@c.n, 64]
+instr = qkv.add_instruction('load_cm', ['n'], ['addr_in', 'addr_out'])
+instr.set_inputs([['d0', ['@a.addr_in'], ['@c.n * 128']]])  # u8[@c.n * 128]
+instr.set_outputs([['d1', ['@a.addr_out'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.add_semantics("""
 ENTRY load_cm {
     %In1 = u8[`@c.n * 128`] parameter(0);
@@ -42,9 +42,9 @@ ENTRY load_cm {
 """)
 
 # (3) store_rm: Stores data from d1 to HBM (d0) in row-major format
-instr = qkv.add_instruction("store_rm", ["n"], ["addr_in", "addr_out"])
-instr.set_inputs([["d1", ["@a.addr_in"], ["@c.n"]]])  # bf16[@c.n, 64]
-instr.set_outputs([["d0", ["@a.addr_out"], ["@c.n * 128"]]])  # u8[@c.n * 128]
+instr = qkv.add_instruction('store_rm', ['n'], ['addr_in', 'addr_out'])
+instr.set_inputs([['d1', ['@a.addr_in'], ['@c.n']]])  # bf16[@c.n, 64]
+instr.set_outputs([['d0', ['@a.addr_out'], ['@c.n * 128']]])  # u8[@c.n * 128]
 instr.add_semantics("""
 ENTRY store_rm {
     %In1 = bf16[`@c.n`,64] parameter(0);
@@ -54,9 +54,9 @@ ENTRY store_rm {
 """)
 
 # (4) store_cm: Stores data from d1 to HBM (d0) in column-major format (with transpose)
-instr = qkv.add_instruction("store_cm", ["n"], ["addr_in", "addr_out"])
-instr.set_inputs([["d1", ["@a.addr_in"], ["@c.n"]]])  # bf16[@c.n, 64]
-instr.set_outputs([["d0", ["@a.addr_out"], ["@c.n * 128"]]])  # u8[@c.n * 128]
+instr = qkv.add_instruction('store_cm', ['n'], ['addr_in', 'addr_out'])
+instr.set_inputs([['d1', ['@a.addr_in'], ['@c.n']]])  # bf16[@c.n, 64]
+instr.set_outputs([['d0', ['@a.addr_out'], ['@c.n * 128']]])  # u8[@c.n * 128]
 instr.add_semantics("""
 ENTRY store_cm {
     %In1 = bf16[`@c.n`,64] parameter(0);
@@ -67,9 +67,9 @@ ENTRY store_cm {
 """)
 
 # (5) mov: Copies data from d2 to d1
-instr = qkv.add_instruction("mov", ["n"], ["addr_in", "addr_out"])
-instr.set_inputs([["d2", ["@a.addr_in"], ["@c.n"]]])  # bf16[@c.n, 64]
-instr.set_outputs([["d1", ["@a.addr_out"], ["@c.n"]]])  # bf16[@c.n, 64]
+instr = qkv.add_instruction('mov', ['n'], ['addr_in', 'addr_out'])
+instr.set_inputs([['d2', ['@a.addr_in'], ['@c.n']]])  # bf16[@c.n, 64]
+instr.set_outputs([['d1', ['@a.addr_out'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.add_semantics("""
 ENTRY mov {
     %In1 = bf16[`@c.n`,64] parameter(0);
@@ -78,9 +78,9 @@ ENTRY mov {
 """)
 
 # (6) gemm: Matrix multiplication between two d1 tensors, output to d2
-instr = qkv.add_instruction("gemm", [], ["addr_1", "addr_2", "addr_out"])
-instr.set_inputs([["d1", ["@a.addr_1"], ["64"]], ["d1", ["@a.addr_2"], ["64"]]])
-instr.set_outputs([["d2", ["@a.addr_out"], ["64"]]])  # bf16[64, 64]
+instr = qkv.add_instruction('gemm', [], ['addr_1', 'addr_2', 'addr_out'])
+instr.set_inputs([['d1', ['@a.addr_1'], ['64']], ['d1', ['@a.addr_2'], ['64']]])
+instr.set_outputs([['d2', ['@a.addr_out'], ['64']]])  # bf16[64, 64]
 instr.add_semantics("""
 ENTRY gemm {
     %In1 = bf16[64,64] parameter(0);
@@ -90,9 +90,9 @@ ENTRY gemm {
 """)
 
 # (7) softmax: Applies softmax along dimension 1 (rows) on d2
-instr = qkv.add_instruction("softmax", ["n"], ["addr"])
-instr.set_inputs([["d2", ["@a.addr"], ["@c.n"]]])
-instr.set_outputs([["d2", ["@a.addr"], ["@c.n"]]])  # In-place operation
+instr = qkv.add_instruction('softmax', ['n'], ['addr'])
+instr.set_inputs([['d2', ['@a.addr'], ['@c.n']]])
+instr.set_outputs([['d2', ['@a.addr'], ['@c.n']]])  # In-place operation
 instr.add_semantics("""
 ENTRY softmax {
     %In1 = bf16[`@c.n`,64] parameter(0);
