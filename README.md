@@ -28,7 +28,7 @@ pip install -e .
 
 ## Examples
 
-- `examples/mini_trn.py`: an accelerator with two on-chip buffers
+- `examples/mini_trn.py`: an AWS Trainium-like accelerator design with two on-chip buffers
 - `examples/mini_trn_double.py`: a variant with a third on-chip buffer
 
 ## Testing
