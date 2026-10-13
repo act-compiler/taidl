@@ -30,14 +30,18 @@ ROOT     : 'ROOT' ;
 
 // Types
 // Probably can just use IDENTIFIER
-TYPE     : 's8' | 's32' | 'u8' | 'u32' | 'f32' | 'f16' | 'bf16' ;
+TYPE     : 's8' | 's16' | 's32' | 'u8' | 'u16' | 'u32' | 'f32' | 'f16' | 'bf16' | 'pred' ;
 
 // Operations (from template.py function_templates)
-OPERATION : 'reshape' | 'convert' | 'copy' | 'exp' | 'concatenate' | 'bitcast_convert'
+OPERATION : 'reshape' | 'convert' | 'copy' | 'concatenate' | 'bitcast_convert'
           | 'transpose' | 'slice' | 'dot' | 'constant' | 'broadcast' | 'maximum'
-          | 'minimum' | 'select_lt' | 'select_eq_var' | 'xor' | 'add'
-          | 'dynamic_update_slice' | 'subtract' | 'multiply' | 'divide' | 'reduce'
-          | 'parameter' | 'reduce_add' | 'exponential'; // parameter is special operation for inputs
+          | 'minimum' | 'xor' | 'add'
+          | 'dynamic_update_slice' | 'subtract' | 'multiply' | 'divide'
+          | 'parameter' | 'reduce_add' | 'exponential' // parameter is special operation for inputs
+          | 'reduce_max' | 'reduce_min' | 'reduce_and' | 'reduce_or' | 'gather' | 'iota'
+          | 'abs' | 'negate' | 'sign' | 'sqrt' | 'rsqrt' | 'log' | 'log_plus_one' | 'logistic'
+          | 'tanh' | 'sine' | 'round_nearest_even' | 'power' | 'clamp' | 'compare' | 'select'
+          | 'and' | 'or' | 'shift_left' | 'shift_right_logical' | 'shift_right_arithmetic';
 
 // Symbols
 EQUAL    : '=' ;
