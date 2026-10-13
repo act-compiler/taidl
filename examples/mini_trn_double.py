@@ -1,25 +1,23 @@
-"""QKV Accelerator ISA Definition"""
-
 from taidl import Accelerator
 
-qkv = Accelerator('QKV')
+mini_trn_double = Accelerator('mini_trn_double')
 
 
 # Define Data Models
 # d1: 128 rows x 64 columns of bf16
-qkv.add_data_model('d1', [128], [64], 'bf16')
+mini_trn_double.add_data_model('d1', [128], [64], 'bf16')
 
 # d3: 128 rows x 64 columns of bf16
-qkv.add_data_model('d3', [128], [64], 'bf16')
+mini_trn_double.add_data_model('d3', [128], [64], 'bf16')
 
 # d2: 64 rows x 64 columns of bf16
-qkv.add_data_model('d2', [64], [64], 'bf16')
+mini_trn_double.add_data_model('d2', [64], [64], 'bf16')
 
 
 # Define Instruction semantics
 
 # (1) load_01: Loads data from HBM (d0) in row-major format to d1
-instr = qkv.add_instruction('load_01', ['n'], ['addr_in', 'addr_out'])
+instr = mini_trn_double.add_instruction('load_01', ['n'], ['addr_in', 'addr_out'])
 instr.set_inputs([['d0', ['@a.addr_in'], ['@c.n * 128']]])  # u8[@c.n * 128]
 instr.set_outputs([['d1', ['@a.addr_out'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.add_semantics("""
@@ -32,7 +30,7 @@ ENTRY {
 
 
 # (2) load_03: Loads data from HBM (d0) in row-major format to d3
-instr = qkv.add_instruction('load_03', ['n'], ['addr_in', 'addr_out'])
+instr = mini_trn_double.add_instruction('load_03', ['n'], ['addr_in', 'addr_out'])
 instr.set_inputs([['d0', ['@a.addr_in'], ['@c.n * 128']]])  # u8[@c.n * 128]
 instr.set_outputs([['d3', ['@a.addr_out'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.add_semantics("""
@@ -45,7 +43,7 @@ ENTRY {
 
 
 # (3) store_10: Stores data from d1 to HBM (d0) in row-major format
-instr = qkv.add_instruction('store_10', ['n'], ['addr_in', 'addr_out'])
+instr = mini_trn_double.add_instruction('store_10', ['n'], ['addr_in', 'addr_out'])
 instr.set_inputs([['d1', ['@a.addr_in'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.set_outputs([['d0', ['@a.addr_out'], ['@c.n * 128']]])  # u8[@c.n * 128]
 instr.add_semantics("""
@@ -57,7 +55,7 @@ ENTRY {
 """)
 
 # (4) store_30: Stores data from d3 to HBM (d0) in row-major format
-instr = qkv.add_instruction('store_30', ['n'], ['addr_in', 'addr_out'])
+instr = mini_trn_double.add_instruction('store_30', ['n'], ['addr_in', 'addr_out'])
 instr.set_inputs([['d3', ['@a.addr_in'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.set_outputs([['d0', ['@a.addr_out'], ['@c.n * 128']]])  # u8[@c.n * 128]
 instr.add_semantics("""
@@ -69,7 +67,7 @@ ENTRY {
 """)
 
 # (5) transpose_13: Moves data from d1 to d3 in row-major format (with transpose)
-instr = qkv.add_instruction('transpose_13', [], ['addr_in', 'addr_out'])
+instr = mini_trn_double.add_instruction('transpose_13', [], ['addr_in', 'addr_out'])
 instr.set_inputs([['d1', ['@a.addr_in'], ['64']]])  # bf16[@c.n, 64]
 instr.set_outputs([['d3', ['@a.addr_out'], ['64']]])  # bf16[64, @c.n]
 instr.add_semantics("""
@@ -81,7 +79,7 @@ ENTRY {
 """)
 
 # (6) mov_21: Copies data from d2 to d1
-instr = qkv.add_instruction('mov_21', ['n'], ['addr_in', 'addr_out'])
+instr = mini_trn_double.add_instruction('mov_21', ['n'], ['addr_in', 'addr_out'])
 instr.set_inputs([['d2', ['@a.addr_in'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.set_outputs([['d1', ['@a.addr_out'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.add_semantics("""
@@ -92,7 +90,7 @@ ENTRY {
 """)
 
 # (7) mov_23: Copies data from d2 to d3
-instr = qkv.add_instruction('mov_23', ['n'], ['addr_in', 'addr_out'])
+instr = mini_trn_double.add_instruction('mov_23', ['n'], ['addr_in', 'addr_out'])
 instr.set_inputs([['d2', ['@a.addr_in'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.set_outputs([['d3', ['@a.addr_out'], ['@c.n']]])  # bf16[@c.n, 64] (ignore last 64 columns)
 instr.add_semantics("""
@@ -103,7 +101,7 @@ ENTRY {
 """)
 
 # (8) gemm_33: Matrix multiplication between two d3 tensors, output to d2
-instr = qkv.add_instruction('gemm_33', [], ['addr_1', 'addr_2', 'addr_out'])
+instr = mini_trn_double.add_instruction('gemm_33', [], ['addr_1', 'addr_2', 'addr_out'])
 instr.set_inputs([['d3', ['@a.addr_1'], ['64']], ['d3', ['@a.addr_2'], ['64']]])
 instr.set_outputs([['d2', ['@a.addr_out'], ['64']]])  # bf16[64, 64]
 instr.add_semantics("""
@@ -115,7 +113,7 @@ ENTRY {
 """)
 
 # (9) gemm_13: Matrix multiplication between one d1 tensor and one d3 tensor, output to d2
-instr = qkv.add_instruction('gemm_13', [], ['addr_1', 'addr_2', 'addr_out'])
+instr = mini_trn_double.add_instruction('gemm_13', [], ['addr_1', 'addr_2', 'addr_out'])
 instr.set_inputs([['d1', ['@a.addr_1'], ['64']], ['d3', ['@a.addr_2'], ['64']]])
 instr.set_outputs([['d2', ['@a.addr_out'], ['64']]])  # bf16[64, 64]
 instr.add_semantics("""
@@ -127,7 +125,7 @@ ENTRY {
 """)
 
 # (10) softmax: Applies softmax along dimension 1 (rows) on d2
-instr = qkv.add_instruction('softmax', ['n'], ['addr'])
+instr = mini_trn_double.add_instruction('softmax', ['n'], ['addr'])
 instr.set_inputs([['d2', ['@a.addr'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.set_outputs([['d2', ['@a.addr'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.add_semantics("""

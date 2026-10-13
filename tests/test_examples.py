@@ -12,7 +12,7 @@ OPERANDS = ['addr_1', 'addr_2', 'addr_out']
 
 # Per example: models' dims and types, instructions' attributes and buffers
 EXAMPLES = {
-    'QKV': {
+    'mini_trn': {
         'models': {
             'd0': ([], [], 'u8'),
             'd1': ([128], [64], 'bf16'),
@@ -28,7 +28,7 @@ EXAMPLES = {
             'softmax': (['n'], ['addr'], ['d2'], ['d2']),
         },
     },
-    'QKV_new': {
+    'mini_trn_double': {
         'models': {
             'd0': ([], [], 'u8'),
             'd1': ([128], [64], 'bf16'),
@@ -58,13 +58,13 @@ def example(request):
     spec = importlib.util.spec_from_file_location(request.param, path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    return module.qkv, EXAMPLES[request.param]
+    return getattr(module, request.param), EXAMPLES[request.param]
 
 
 class TestExamples:
     def test_accelerator_name(self, example):
-        acc = example[0]
-        assert acc.name == 'QKV'
+        acc, declared = example
+        assert EXAMPLES[acc.name] is declared
 
     def test_data_models(self, example):
         acc, declared = example

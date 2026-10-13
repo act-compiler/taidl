@@ -28,8 +28,8 @@ pip install -e .
 
 ## Examples
 
-- `examples/QKV.py`: QKV attention accelerator
-- `examples/QKV_new.py`: variant of QKV with a third buffer
+- `examples/mini_trn.py`: an accelerator with two on-chip buffers
+- `examples/mini_trn_double.py`: a variant with a third on-chip buffer
 
 ## Testing
 
