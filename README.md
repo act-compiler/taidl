@@ -11,6 +11,8 @@ TAIDL is published in [MICRO 2025](https://doi.org/10.1145/3725843.3756075). For
 
 ## Installation
 
+TAIDL needs Python 3.14 or later.
+
 ```bash
 pip install git+https://github.com/act-compiler/taidl.git@v2.2
 ```
@@ -31,10 +33,10 @@ pip install -e .
 ## Testing
 
 ```bash
-pip install -e .
-pip install pytest
-pytest tests/
+./tests/pytest.sh
 ```
+
+`tests/pytest.sh` runs the tests in `devanshdvj/act-env:py3.14-jax0.10.2`, the image `docker/act.env` names, in its tag for the host's architecture, amd64 or arm64.
 
 ## Implementation Details
 
