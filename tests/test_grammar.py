@@ -26,7 +26,7 @@ acc = Accelerator('Grammar')
 
 
 def parse(semantics):
-    instr = acc.add_instruction('t', [], [])
+    instr = acc.add_instruction('t', ['n'], [])
     instr.add_semantics(semantics)
     return instr.instr_semantics_ast
 

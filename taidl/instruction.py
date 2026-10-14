@@ -10,7 +10,7 @@ from antlr4.Token import CommonToken
 from antlr4.tree.Tree import TerminalNode
 from antlr4.tree.Trees import Trees
 
-from .data_model import DataModel
+from .data_model import DataModel, State
 from .antlr4 import IDLV2ExprLexer, IDLV2ExprParser, IDLV2Lexer, IDLV2Parser
 from .operations import check_operations
 
@@ -39,6 +39,7 @@ class Instruction:
     parameters: List[str]
     constraints: List[str]
     data_models: List[DataModel]
+    state: list[State]
     update: List[str]
 
     instr_inputs: List[Tuple[str, List[str], List[str]]]
@@ -63,10 +64,13 @@ class Instruction:
         constraints: Sequence[str],
         update: Sequence[str],
         data_models: List[DataModel],
+        state: list[State],
     ):
         self.instruction = name.replace(' ', '_')
         self.comp_attr = strings(name, 'computation_attr', comp_attr)
         self.parameters = strings(name, 'addressing_attr', addr_attr)
+        # The accelerator's state, complete before any instruction
+        self.state = state
         self.constraints, self.constraint_asts = [], []
         self.append_constraints(strings(name, 'constraints', constraints))
         given = strings(name, 'update', update)
@@ -289,6 +293,26 @@ class Instruction:
         tree, errors = parse(IDLV2ExprLexer, IDLV2ExprParser, RULES[place], text)
         if errors:
             raise self.text_error(place, text, token, *errors[0])
+        # Each reference, an update's target too, names what is declared
+        declared = {
+            '@a.': self.parameters,
+            '@c.': self.comp_attr,
+            '@s.': [variable.name for variable in self.state],
+        }
+        names = [
+            node.getSymbol()
+            for reference in (
+                IDLV2ExprParser.ADDRESSING,
+                IDLV2ExprParser.COMPUTATIONAL,
+                IDLV2ExprParser.STATE,
+            )
+            for node in Trees.findAllTokenNodes(tree, reference)
+        ]
+        for name in sorted(names, key=lambda symbol: symbol.tokenIndex):
+            kind = name.text[:3]
+            if name.text[3:] not in declared[kind]:
+                message = f"'{name.text}' names no {KINDS[kind]}"
+                raise self.text_error(place, text, token, name.line, name.column + 1, message)
         return tree.getChild(0)
 
     def text_error(
@@ -319,6 +343,10 @@ RULES = {
     'constraint': 'constraint_text',
     'update': 'update_text',
 }
+
+
+# What each kind of reference names
+KINDS = {'@a.': 'addressing attribute', '@c.': 'computational attribute', '@s.': 'state variable'}
 
 
 def parse(lexer_class, parser_class, rule: str, text: str):

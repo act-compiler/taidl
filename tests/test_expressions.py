@@ -218,3 +218,59 @@ class TestUpdates:
     def test_update_fails(self, text, message):
         with pytest.raises(SyntaxError, match=re.escape(f"t: update '{text}' {message}")):
             instruction(update=[text])
+
+
+class TestDeclaredNames:
+    @pytest.mark.parametrize(
+        'text, message',
+        [
+            ('@c.k * 2', "line 1, column 1: '@c.k' names no computational attribute"),
+            ('@a.x + @a.n', "line 1, column 8: '@a.n' names no addressing attribute"),
+            ('@s.busy', "line 1, column 1: '@s.busy' names no state variable"),
+        ],
+        ids=['computational', 'addressing', 'state'],
+    )
+    def test_undeclared_name_in_a_size_fails(self, text, message):
+        with pytest.raises(SyntaxError, match=re.escape(f"t: size '{text}' {message}")):
+            instruction().set_outputs([['d1', ['@a.x'], [text]]])
+
+    def test_undeclared_name_in_a_start_fails(self):
+        message = "t: start '@a.adr * 8' line 1, column 1: '@a.adr' names no addressing attribute"
+        with pytest.raises(SyntaxError, match=re.escape(message)):
+            instruction().set_inputs([['d1', ['@a.adr * 8'], ['1']]])
+
+    def test_undeclared_name_in_a_constraint_fails(self):
+        text = '@a.x + @c.k <= 64'
+        message = (
+            f"t: constraint '{text}' line 1, column 8: '@c.k' names no computational attribute"
+        )
+        with pytest.raises(SyntaxError, match=re.escape(message)):
+            instruction(constraints=[text])
+
+    @pytest.mark.parametrize(
+        'text, message',
+        [
+            ('@s.busy = 1', "line 1, column 1: '@s.busy' names no state variable"),
+            ('@s.mode = @s.busy', "line 1, column 11: '@s.busy' names no state variable"),
+        ],
+        ids=['target', 'value'],
+    )
+    def test_undeclared_name_in_an_update_fails(self, text, message):
+        with pytest.raises(SyntaxError, match=re.escape(f"t: update '{text}' {message}")):
+            instruction(update=[text])
+
+    def test_undeclared_name_in_a_semantics_fails(self):
+        text = 'ENTRY {\n    %In0 = f32[4] parameter(0);\n    ROOT %Out0 = f32[4,`@c.k`] copy(%In0);\n}\n'
+        message = "t: semantics line 3, column 25: '@c.k' names no computational attribute"
+        with pytest.raises(SyntaxError, match=re.escape(message)):
+            instruction().add_semantics(text)
+
+    def test_state_declared_after_an_instruction_fails(self):
+        acc = make()
+        acc.add_instruction('u', [], [])
+        message = (
+            "state 'busy' follows an instruction: "
+            'state is declared with the data models, before the instructions'
+        )
+        with pytest.raises(ValueError, match=re.escape(message)):
+            acc.add_initial_state('busy', 0)
