@@ -33,7 +33,7 @@ def example(name):
     spec = importlib.util.spec_from_file_location(name, os.path.join(EXAMPLES_DIR, f'{name}.py'))
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    return module.qkv
+    return getattr(module, name)
 
 
 # Each kind of name's declaration, keyed by its refusal's prefix
@@ -106,7 +106,7 @@ class TestBaseDir:
 
     def test_defaults_to_the_directory_of_the_spec(self):
         assert Accelerator('Dir').base_dir == os.path.dirname(os.path.abspath(__file__))
-        assert example('QKV').base_dir == EXAMPLES_DIR
+        assert example('mini_trn').base_dir == EXAMPLES_DIR
 
     def test_defaults_to_the_working_directory_without_a_file(self):
         # A caller with no file, as in an interactive session
