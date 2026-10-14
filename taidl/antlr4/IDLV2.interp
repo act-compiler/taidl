@@ -52,9 +52,9 @@ operands
 operand
 attributes
 attribute
-attributeValue
-braceList
-sliceList
+attribute_value
+brace_list
+slice_list
 shape
 value
 name

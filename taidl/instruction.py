@@ -65,9 +65,9 @@ class Instruction:
         self.instr_semantics_str = semantics
         self.instr_semantics_ast = None
         if semantics and semantics.strip():
-            self.instr_semantics_ast = self._parse_semantics(semantics)
+            self.instr_semantics_ast = self.parse_semantics(semantics)
 
-    def _parse_semantics(self, semantics: str):
+    def parse_semantics(self, semantics: str):
         """Parse semantics into AST eagerly to catch syntax errors early"""
         input_stream = InputStream(semantics)
         lexer = IDLV2Lexer(input_stream)

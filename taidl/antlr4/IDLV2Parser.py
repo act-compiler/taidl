@@ -90,16 +90,16 @@ class IDLV2Parser ( Parser ):
     RULE_operand = 4
     RULE_attributes = 5
     RULE_attribute = 6
-    RULE_attributeValue = 7
-    RULE_braceList = 8
-    RULE_sliceList = 9
+    RULE_attribute_value = 7
+    RULE_brace_list = 8
+    RULE_slice_list = 9
     RULE_shape = 10
     RULE_value = 11
     RULE_name = 12
 
     ruleNames =  [ "module", "instruction", "result_type", "operands", "operand", 
-                   "attributes", "attribute", "attributeValue", "braceList", 
-                   "sliceList", "shape", "value", "name" ]
+                   "attributes", "attribute", "attribute_value", "brace_list", 
+                   "slice_list", "shape", "value", "name" ]
 
     EOF = Token.EOF
     ENTRY=1
@@ -609,8 +609,8 @@ class IDLV2Parser ( Parser ):
         def EQUAL(self):
             return self.getToken(IDLV2Parser.EQUAL, 0)
 
-        def attributeValue(self):
-            return self.getTypedRuleContext(IDLV2Parser.AttributeValueContext,0)
+        def attribute_value(self):
+            return self.getTypedRuleContext(IDLV2Parser.Attribute_valueContext,0)
 
 
         def getRuleIndex(self):
@@ -644,7 +644,7 @@ class IDLV2Parser ( Parser ):
             self.state = 81
             self.match(IDLV2Parser.EQUAL)
             self.state = 82
-            self.attributeValue()
+            self.attribute_value()
         except RecognitionException as re:
             localctx.exception = re
             self._errHandler.reportError(self, re)
@@ -654,19 +654,19 @@ class IDLV2Parser ( Parser ):
         return localctx
 
 
-    class AttributeValueContext(ParserRuleContext):
+    class Attribute_valueContext(ParserRuleContext):
         __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
             self.parser = parser
 
-        def braceList(self):
-            return self.getTypedRuleContext(IDLV2Parser.BraceListContext,0)
+        def brace_list(self):
+            return self.getTypedRuleContext(IDLV2Parser.Brace_listContext,0)
 
 
-        def sliceList(self):
-            return self.getTypedRuleContext(IDLV2Parser.SliceListContext,0)
+        def slice_list(self):
+            return self.getTypedRuleContext(IDLV2Parser.Slice_listContext,0)
 
 
         def value(self):
@@ -674,29 +674,29 @@ class IDLV2Parser ( Parser ):
 
 
         def getRuleIndex(self):
-            return IDLV2Parser.RULE_attributeValue
+            return IDLV2Parser.RULE_attribute_value
 
         def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterAttributeValue" ):
-                listener.enterAttributeValue(self)
+            if hasattr( listener, "enterAttribute_value" ):
+                listener.enterAttribute_value(self)
 
         def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitAttributeValue" ):
-                listener.exitAttributeValue(self)
+            if hasattr( listener, "exitAttribute_value" ):
+                listener.exitAttribute_value(self)
 
         def accept(self, visitor:ParseTreeVisitor):
-            if hasattr( visitor, "visitAttributeValue" ):
-                return visitor.visitAttributeValue(self)
+            if hasattr( visitor, "visitAttribute_value" ):
+                return visitor.visitAttribute_value(self)
             else:
                 return visitor.visitChildren(self)
 
 
 
 
-    def attributeValue(self):
+    def attribute_value(self):
 
-        localctx = IDLV2Parser.AttributeValueContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 14, self.RULE_attributeValue)
+        localctx = IDLV2Parser.Attribute_valueContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 14, self.RULE_attribute_value)
         try:
             self.state = 87
             self._errHandler.sync(self)
@@ -704,13 +704,13 @@ class IDLV2Parser ( Parser ):
             if la_ == 1:
                 self.enterOuterAlt(localctx, 1)
                 self.state = 84
-                self.braceList()
+                self.brace_list()
                 pass
 
             elif la_ == 2:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 85
-                self.sliceList()
+                self.slice_list()
                 pass
 
             elif la_ == 3:
@@ -729,7 +729,7 @@ class IDLV2Parser ( Parser ):
         return localctx
 
 
-    class BraceListContext(ParserRuleContext):
+    class Brace_listContext(ParserRuleContext):
         __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
@@ -756,29 +756,29 @@ class IDLV2Parser ( Parser ):
                 return self.getToken(IDLV2Parser.COMMA, i)
 
         def getRuleIndex(self):
-            return IDLV2Parser.RULE_braceList
+            return IDLV2Parser.RULE_brace_list
 
         def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterBraceList" ):
-                listener.enterBraceList(self)
+            if hasattr( listener, "enterBrace_list" ):
+                listener.enterBrace_list(self)
 
         def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitBraceList" ):
-                listener.exitBraceList(self)
+            if hasattr( listener, "exitBrace_list" ):
+                listener.exitBrace_list(self)
 
         def accept(self, visitor:ParseTreeVisitor):
-            if hasattr( visitor, "visitBraceList" ):
-                return visitor.visitBraceList(self)
+            if hasattr( visitor, "visitBrace_list" ):
+                return visitor.visitBrace_list(self)
             else:
                 return visitor.visitChildren(self)
 
 
 
 
-    def braceList(self):
+    def brace_list(self):
 
-        localctx = IDLV2Parser.BraceListContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 16, self.RULE_braceList)
+        localctx = IDLV2Parser.Brace_listContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 16, self.RULE_brace_list)
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
@@ -815,7 +815,7 @@ class IDLV2Parser ( Parser ):
         return localctx
 
 
-    class SliceListContext(ParserRuleContext):
+    class Slice_listContext(ParserRuleContext):
         __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
@@ -860,29 +860,29 @@ class IDLV2Parser ( Parser ):
                 return self.getToken(IDLV2Parser.COMMA, i)
 
         def getRuleIndex(self):
-            return IDLV2Parser.RULE_sliceList
+            return IDLV2Parser.RULE_slice_list
 
         def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterSliceList" ):
-                listener.enterSliceList(self)
+            if hasattr( listener, "enterSlice_list" ):
+                listener.enterSlice_list(self)
 
         def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitSliceList" ):
-                listener.exitSliceList(self)
+            if hasattr( listener, "exitSlice_list" ):
+                listener.exitSlice_list(self)
 
         def accept(self, visitor:ParseTreeVisitor):
-            if hasattr( visitor, "visitSliceList" ):
-                return visitor.visitSliceList(self)
+            if hasattr( visitor, "visitSlice_list" ):
+                return visitor.visitSlice_list(self)
             else:
                 return visitor.visitChildren(self)
 
 
 
 
-    def sliceList(self):
+    def slice_list(self):
 
-        localctx = IDLV2Parser.SliceListContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 18, self.RULE_sliceList)
+        localctx = IDLV2Parser.Slice_listContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 18, self.RULE_slice_list)
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
