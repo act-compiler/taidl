@@ -8,6 +8,7 @@ from antlr4 import InputStream
 import taidl.antlr4
 from taidl import Accelerator
 from taidl.antlr4 import IDLV2Lexer
+from taidl.data_model import TYPES
 from taidl.operations import (
     BOOL,
     INT,
@@ -269,9 +270,6 @@ def row_lines(word):
         if required
     )
     return [f'ROOT %Out0 = f32[4] {word}({operands}){given};']
-
-
-TYPES = 'pred s2 s4 s8 s16 s32 s64 u2 u4 u8 u16 u32 u64 f8e4m3fn f8e5m2 f16 bf16 f32 f64'.split()
 
 
 class TestWords:

@@ -3,6 +3,29 @@
 from dataclasses import dataclass, field
 from typing import List
 
+# The element types, as the grammar's TYPE rule lexes them
+TYPES = (
+    'pred',
+    's2',
+    's4',
+    's8',
+    's16',
+    's32',
+    's64',
+    'u2',
+    'u4',
+    'u8',
+    'u16',
+    'u32',
+    'u64',
+    'f8e4m3fn',
+    'f8e5m2',
+    'f16',
+    'bf16',
+    'f32',
+    'f64',
+)
+
 
 @dataclass
 class State:
@@ -20,9 +43,7 @@ class DataModel:
     array_dim_str: str = field(init=False)
     num_dim_str: str = field(init=False)
 
-    def __init__(
-        self, var_name: str, access_dim: List[int], unit_dim: List[int], var_type: str = 's8'
-    ):
+    def __init__(self, var_name: str, access_dim: List[int], unit_dim: List[int], var_type: str):
         self.var_name = var_name
         self.var_dim = access_dim + unit_dim
         self.access_dim = access_dim
