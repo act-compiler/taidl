@@ -5,9 +5,20 @@ from dataclasses import dataclass
 from typing import List, Optional, Tuple
 
 from antlr4 import CommonTokenStream, InputStream
+from antlr4.error.ErrorListener import ErrorListener
 
 from .data_model import DataModel
 from .antlr4 import IDLV2Lexer, IDLV2Parser
+
+
+class SyntaxErrors(ErrorListener):
+    """Collect each syntax error with its line and column, both from 1."""
+
+    def __init__(self):
+        self.found = []
+
+    def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
+        self.found.append(f'line {line}, column {column + 1}: {msg}')
 
 
 @dataclass
@@ -99,15 +110,13 @@ class Instruction:
 
     def add_semantics(self, semantics: str):
         self.instr_semantics_str = semantics
-        self.instr_semantics_ast = None
-        if semantics and semantics.strip():
-            tree = self.parse_semantics(semantics)
-            # Against the regions given so far, even none
-            if self.inputs_given:
-                self.check_values(tree, 'input', self.instr_inputs)
-            if self.outputs_given:
-                self.check_values(tree, 'output', self.instr_outputs)
-            self.instr_semantics_ast = tree
+        tree = self.parse_semantics(semantics)
+        # Against the regions given so far, even none
+        if self.inputs_given:
+            self.check_values(tree, 'input', self.instr_inputs)
+        if self.outputs_given:
+            self.check_values(tree, 'output', self.instr_outputs)
+        self.instr_semantics_ast = tree
 
     def parse_semantics(self, semantics: str):
         """Parse semantics into AST eagerly to catch syntax errors early"""
@@ -115,9 +124,14 @@ class Instruction:
         lexer = IDLV2Lexer(input_stream)
         stream = CommonTokenStream(lexer)
         parser = IDLV2Parser(stream)
+        # Collect syntax errors rather than print them
+        errors = SyntaxErrors()
+        for recognizer in (lexer, parser):
+            recognizer.removeErrorListeners()
+            recognizer.addErrorListener(errors)
         tree = parser.module()
-        if parser.getNumberOfSyntaxErrors() > 0:
-            raise SyntaxError(f"Failed to parse semantics for instruction '{self.instruction}'")
+        if errors.found:
+            raise SyntaxError(f'{self.instruction}: semantics {errors.found[0]}')
         # One line carries ROOT
         roots = sum(line.ROOT() is not None for line in tree.instruction())
         if roots != 1:
