@@ -1,5 +1,6 @@
 """Instruction set definitions for TAIDLv2"""
 
+import re
 from dataclasses import dataclass
 from typing import List, Optional, Tuple
 
@@ -82,6 +83,30 @@ class Instruction:
             raise SyntaxError(
                 f'{self.instruction}: semantics needs exactly one ROOT, found {roots}'
             )
+        # Input k enters as %In<k>, declared by parameter(k) alone
+        for line in tree.instruction():
+            name = line.IDENTIFIER().getSymbol()
+            operation = line.OPERATION().getText()
+            if operation == 'parameter':
+                # One integer operand, the input's number
+                text = line.operands().getText() if line.operands() else ''
+                if not re.fullmatch(r'\d+', text):
+                    word = line.OPERATION().getSymbol()
+                    raise SyntaxError(
+                        f'{self.instruction}: semantics line {word.line}, column {word.column + 1}: '
+                        f"parameter({text}) needs one integer, the input's number"
+                    )
+                number = int(text)
+                if name.text != f'%In{number}':
+                    raise SyntaxError(
+                        f'{self.instruction}: semantics line {name.line}, column {name.column + 1}: '
+                        f"parameter({text}) declares '%In{number}', not '{name.text}'"
+                    )
+            elif re.fullmatch(r'%In\d+', name.text):
+                raise SyntaxError(
+                    f'{self.instruction}: semantics line {name.line}, column {name.column + 1}: '
+                    f"'{name.text}' is declared by parameter({name.text[3:]}), not by {operation}"
+                )
         return tree
 
     def add_constraints(self, constraints: str):

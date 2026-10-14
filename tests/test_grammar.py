@@ -20,7 +20,7 @@ def parse(semantics):
 
 def spec(*lines, entry='t'):
     return (
-        f'ENTRY {entry} {{\n    %In1 = f32[4] parameter(0);\n'
+        f'ENTRY {entry} {{\n    %In0 = f32[4] parameter(0);\n'
         + ''.join(f'    {line}\n' for line in lines)
         + '}\n'
     )
@@ -34,14 +34,17 @@ def lexed(rule):
     return re.findall(r"'([^']+)'", body)
 
 
+COPY = 'ROOT %Out0 = f32[4] copy(%In0);'
+
+
 class TestComments:
     def test_comment_skipped(self):
-        text = '// the copy\n' + spec('// its one line', 'ROOT %Out0 = f32[4] copy(%In1); // done')
+        text = '// the copy\n' + spec('// its one line', 'ROOT %Out0 = f32[4] copy(%In0); // done')
         tree = parse(text)
         assert [line.OPERATION().getText() for line in tree.instruction()] == ['parameter', 'copy']
 
     def test_floor_division_stays_in_an_expression(self):
-        tree = parse(spec('ROOT %Out0 = f32[`@c.n // 2`] copy(%In1);'))
+        tree = parse(spec('ROOT %Out0 = f32[`@c.n // 2`] copy(%In0);'))
         assert tree.instruction(1).result_type().shape().getText() == '`@c.n // 2`'
 
 
@@ -49,8 +52,8 @@ class TestRoot:
     @pytest.mark.parametrize(
         'lines, found',
         [
-            (['%Out0 = f32[4] copy(%In1);'], 0),
-            (['ROOT %a = f32[4] copy(%In1);', 'ROOT %Out0 = f32[4] copy(%a);'], 2),
+            (['%Out0 = f32[4] copy(%In0);'], 0),
+            (['ROOT %a = f32[4] copy(%In0);', 'ROOT %Out0 = f32[4] copy(%a);'], 2),
         ],
         ids=['none', 'two'],
     )
@@ -58,6 +61,48 @@ class TestRoot:
         with pytest.raises(
             SyntaxError, match=f't: semantics needs exactly one ROOT, found {found}'
         ):
+            parse(spec(*lines))
+
+
+class TestInputs:
+    def test_inputs_count_from_zero(self):
+        tree = parse(spec('%In1 = f32[4] parameter(1);', 'ROOT %Out0 = f32[4] add(%In0, %In1);'))
+        assert [line.IDENTIFIER().getText() for line in tree.instruction()][:2] == ['%In0', '%In1']
+
+    @pytest.mark.parametrize(
+        'lines, message',
+        [
+            (
+                ['%In2 = f32[4] parameter(1);', 'ROOT %Out0 = f32[4] add(%In0, %In2);'],
+                "line 3, column 5: parameter(1) declares '%In1', not '%In2'",
+            ),
+            (
+                ['%In1 = f32[4] negate(%In0);', 'ROOT %Out0 = f32[4] add(%In0, %In1);'],
+                "line 3, column 5: '%In1' is declared by parameter(1), not by negate",
+            ),
+            (
+                ['%In00 = f32[4] parameter(00);', 'ROOT %Out0 = f32[4] add(%In0, %In00);'],
+                "line 3, column 5: parameter(00) declares '%In0', not '%In00'",
+            ),
+            (
+                ['%In1 = f32[4] parameter(%In0);', 'ROOT %Out0 = f32[4] add(%In0, %In1);'],
+                "line 3, column 19: parameter(%In0) needs one integer, the input's number",
+            ),
+            (
+                ['%In1 = f32[4] parameter(0,1);', 'ROOT %Out0 = f32[4] add(%In0, %In1);'],
+                "line 3, column 19: parameter(0,1) needs one integer, the input's number",
+            ),
+        ],
+        ids=[
+            'parameter_misnamed',
+            'input_name_not_a_parameter',
+            'parameter_number_with_leading_zero',
+            'parameter_operand_not_an_integer',
+            'parameter_of_two_operands',
+        ],
+    )
+    def test_input_named_otherwise_fails(self, lines, message):
+        with pytest.raises(SyntaxError, match=re.escape(f't: semantics {message}')):
             parse(spec(*lines))
 
 
@@ -91,24 +136,29 @@ class TestWords:
 
     @pytest.mark.parametrize('op', OPERATIONS)
     def test_operation(self, op):
-        tree = parse(spec(f'ROOT %Out0 = f32[4] {op}(%In1);'))
+        # parameter declares an input; any other word computes the output
+        if op == 'parameter':
+            lines = ['%In1 = f32[4] parameter(1);', COPY]
+        else:
+            lines = [f'ROOT %Out0 = f32[4] {op}(%In0);']
+        tree = parse(spec(*lines))
         assert tree.instruction(1).OPERATION().getText() == op
 
     @pytest.mark.parametrize('op', ['frobnicate', 'log-plus-one'], ids=['unknown', 'hyphenated'])
     def test_word_outside_the_list_fails(self, op):
         with pytest.raises(SyntaxError):
-            parse(spec(f'ROOT %Out0 = f32[4] {op}(%In1);'))
+            parse(spec(f'ROOT %Out0 = f32[4] {op}(%In0);'))
 
     @pytest.mark.parametrize(
         'typ', ['c64', 'f8e4m3', 'f8e5m2fnuz'], ids=['unlisted', 'shorter_name', 'longer_name']
     )
     def test_type_outside_the_list_fails(self, typ):
         with pytest.raises(SyntaxError):
-            parse(spec(f'ROOT %Out0 = {typ}[4] convert(%In1);'))
+            parse(spec(f'ROOT %Out0 = {typ}[4] convert(%In0);'))
 
     @pytest.mark.parametrize('typ', TYPES)
     def test_type(self, typ):
-        tree = parse(spec(f'ROOT %Out0 = {typ}[4] convert(%In1);'))
+        tree = parse(spec(f'ROOT %Out0 = {typ}[4] convert(%In0);'))
         assert tree.instruction(1).result_type().TYPE().getText() == typ
 
 
@@ -134,7 +184,7 @@ class TestLiterals:
         assert value.NUMBER() is None
 
     def test_number_attribute(self):
-        tree = parse(spec('ROOT %Out0 = f32[4] power(%In1), exponent=-0.5;'))
+        tree = parse(spec('ROOT %Out0 = f32[4] power(%In0), exponent=-0.5;'))
         value = tree.instruction(1).attributes().attribute(0).attribute_value().value()
         assert value.NUMBER().getText() == '-0.5'
 
@@ -154,39 +204,39 @@ class TestShapes:
         assert result.shape() is None
 
     def test_ranked_result(self):
-        tree = parse(spec('ROOT %Out0 = f32[`@c.n`,4] broadcast(%In1), dimensions={1};'))
+        tree = parse(spec('ROOT %Out0 = f32[`@c.n`,4] broadcast(%In0), dimensions={1};'))
         assert tree.instruction(1).result_type().shape().getText() == '`@c.n`,4'
 
 
 class TestEntry:
     def test_identifier_name(self):
-        tree = parse(spec('ROOT %Out0 = f32[4] copy(%In1);'))
+        tree = parse(spec('ROOT %Out0 = f32[4] copy(%In0);'))
         assert tree.name().getText() == 't'
         assert tree.name().IDENTIFIER() is not None
 
     @pytest.mark.parametrize('op', ['copy', 'and', 'reduce_add'])
     def test_operation_name(self, op):
-        tree = parse(spec('ROOT %Out0 = f32[4] copy(%In1);', entry=op))
+        tree = parse(spec('ROOT %Out0 = f32[4] copy(%In0);', entry=op))
         assert tree.name().getText() == op
         assert tree.name().OPERATION() is not None
 
 
 class TestAttributes:
     def test_identifier_name(self):
-        tree = parse(spec('ROOT %Out0 = f32[4] broadcast(%In1), dimensions={0};'))
+        tree = parse(spec('ROOT %Out0 = f32[4] broadcast(%In0), dimensions={0};'))
         attribute = tree.instruction(1).attributes().attribute(0)
         assert attribute.name().getText() == 'dimensions'
         assert attribute.name().IDENTIFIER() is not None
 
     @pytest.mark.parametrize('op', ['slice', 'select', 'dot'])
     def test_operation_name(self, op):
-        tree = parse(spec(f'ROOT %Out0 = f32[4] copy(%In1), {op}=1;'))
+        tree = parse(spec(f'ROOT %Out0 = f32[4] copy(%In0), {op}=1;'))
         attribute = tree.instruction(1).attributes().attribute(0)
         assert attribute.name().getText() == op
         assert attribute.name().OPERATION() is not None
 
     def test_slice_list(self):
-        tree = parse(spec('ROOT %Out0 = f32[2] slice(%In1), slice={[0:4:2]};'))
+        tree = parse(spec('ROOT %Out0 = f32[2] slice(%In0), slice={[0:4:2]};'))
         attribute = tree.instruction(1).attributes().attribute(0)
         assert attribute.name().getText() == 'slice'
         assert attribute.attribute_value().slice_list().getText() == '{[0:4:2]}'
