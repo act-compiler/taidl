@@ -11,53 +11,54 @@ else:
 
 def serializedATN():
     with StringIO() as buf:
-        buf.write("\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3\24")
-        buf.write("\u008d\4\2\t\2\4\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7")
+        buf.write("\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3\26")
+        buf.write("\u008f\4\2\t\2\4\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7")
         buf.write("\4\b\t\b\4\t\t\t\4\n\t\n\4\13\t\13\4\f\t\f\4\r\t\r\3\2")
         buf.write("\3\2\3\2\3\2\6\2\37\n\2\r\2\16\2 \3\2\3\2\3\3\5\3&\n\3")
         buf.write("\3\3\3\3\3\3\3\3\3\3\3\3\5\3.\n\3\3\3\3\3\5\3\62\n\3\3")
-        buf.write("\3\5\3\65\n\3\3\4\3\4\3\4\3\4\3\4\3\5\3\5\3\5\7\5?\n\5")
-        buf.write("\f\5\16\5B\13\5\3\6\3\6\3\7\3\7\3\7\3\7\7\7J\n\7\f\7\16")
-        buf.write("\7M\13\7\3\b\3\b\3\b\3\b\3\t\3\t\3\t\5\tV\n\t\3\n\3\n")
-        buf.write("\3\n\3\n\7\n\\\n\n\f\n\16\n_\13\n\5\na\n\n\3\n\3\n\3\13")
-        buf.write("\3\13\3\13\3\13\3\13\3\13\3\13\5\13l\n\13\3\13\3\13\3")
-        buf.write("\13\3\13\3\13\3\13\3\13\3\13\5\13v\n\13\3\13\3\13\7\13")
-        buf.write("z\n\13\f\13\16\13}\13\13\5\13\177\n\13\3\13\3\13\3\f\3")
-        buf.write("\f\3\f\7\f\u0086\n\f\f\f\16\f\u0089\13\f\3\r\3\r\3\r\2")
-        buf.write("\2\16\2\4\6\b\n\f\16\20\22\24\26\30\2\3\3\2\21\23\2\u0090")
-        buf.write("\2\32\3\2\2\2\4%\3\2\2\2\6\66\3\2\2\2\b;\3\2\2\2\nC\3")
-        buf.write("\2\2\2\fE\3\2\2\2\16N\3\2\2\2\20U\3\2\2\2\22W\3\2\2\2")
-        buf.write("\24d\3\2\2\2\26\u0082\3\2\2\2\30\u008a\3\2\2\2\32\33\7")
-        buf.write("\3\2\2\33\34\7\23\2\2\34\36\7\n\2\2\35\37\5\4\3\2\36\35")
-        buf.write("\3\2\2\2\37 \3\2\2\2 \36\3\2\2\2 !\3\2\2\2!\"\3\2\2\2")
-        buf.write("\"#\7\13\2\2#\3\3\2\2\2$&\7\4\2\2%$\3\2\2\2%&\3\2\2\2")
-        buf.write("&\'\3\2\2\2\'(\7\23\2\2()\7\7\2\2)*\5\6\4\2*+\7\6\2\2")
-        buf.write("+-\7\b\2\2,.\5\b\5\2-,\3\2\2\2-.\3\2\2\2./\3\2\2\2/\61")
-        buf.write("\7\t\2\2\60\62\5\f\7\2\61\60\3\2\2\2\61\62\3\2\2\2\62")
-        buf.write("\64\3\2\2\2\63\65\7\17\2\2\64\63\3\2\2\2\64\65\3\2\2\2")
-        buf.write("\65\5\3\2\2\2\66\67\7\5\2\2\678\7\f\2\289\5\26\f\29:\7")
-        buf.write("\r\2\2:\7\3\2\2\2;@\5\n\6\2<=\7\20\2\2=?\5\n\6\2><\3\2")
-        buf.write("\2\2?B\3\2\2\2@>\3\2\2\2@A\3\2\2\2A\t\3\2\2\2B@\3\2\2")
-        buf.write("\2CD\5\30\r\2D\13\3\2\2\2EF\7\20\2\2FK\5\16\b\2GH\7\20")
-        buf.write("\2\2HJ\5\16\b\2IG\3\2\2\2JM\3\2\2\2KI\3\2\2\2KL\3\2\2")
-        buf.write("\2L\r\3\2\2\2MK\3\2\2\2NO\7\23\2\2OP\7\7\2\2PQ\5\20\t")
-        buf.write("\2Q\17\3\2\2\2RV\5\22\n\2SV\5\24\13\2TV\5\30\r\2UR\3\2")
-        buf.write("\2\2US\3\2\2\2UT\3\2\2\2V\21\3\2\2\2W`\7\n\2\2X]\5\30")
-        buf.write("\r\2YZ\7\20\2\2Z\\\5\30\r\2[Y\3\2\2\2\\_\3\2\2\2][\3\2")
-        buf.write("\2\2]^\3\2\2\2^a\3\2\2\2_]\3\2\2\2`X\3\2\2\2`a\3\2\2\2")
-        buf.write("ab\3\2\2\2bc\7\13\2\2c\23\3\2\2\2d~\7\n\2\2ef\7\f\2\2")
-        buf.write("fg\5\30\r\2gh\7\16\2\2hk\5\30\r\2ij\7\16\2\2jl\5\30\r")
-        buf.write("\2ki\3\2\2\2kl\3\2\2\2lm\3\2\2\2m{\7\r\2\2no\7\20\2\2")
-        buf.write("op\7\f\2\2pq\5\30\r\2qr\7\16\2\2ru\5\30\r\2st\7\16\2\2")
-        buf.write("tv\5\30\r\2us\3\2\2\2uv\3\2\2\2vw\3\2\2\2wx\7\r\2\2xz")
-        buf.write("\3\2\2\2yn\3\2\2\2z}\3\2\2\2{y\3\2\2\2{|\3\2\2\2|\177")
-        buf.write("\3\2\2\2}{\3\2\2\2~e\3\2\2\2~\177\3\2\2\2\177\u0080\3")
-        buf.write("\2\2\2\u0080\u0081\7\13\2\2\u0081\25\3\2\2\2\u0082\u0087")
-        buf.write("\5\30\r\2\u0083\u0084\7\20\2\2\u0084\u0086\5\30\r\2\u0085")
-        buf.write("\u0083\3\2\2\2\u0086\u0089\3\2\2\2\u0087\u0085\3\2\2\2")
-        buf.write("\u0087\u0088\3\2\2\2\u0088\27\3\2\2\2\u0089\u0087\3\2")
-        buf.write("\2\2\u008a\u008b\t\2\2\2\u008b\31\3\2\2\2\21 %-\61\64")
-        buf.write("@KU]`ku{~\u0087")
+        buf.write("\3\5\3\65\n\3\3\4\3\4\3\4\5\4:\n\4\3\4\3\4\3\5\3\5\3\5")
+        buf.write("\7\5A\n\5\f\5\16\5D\13\5\3\6\3\6\3\7\3\7\3\7\3\7\7\7L")
+        buf.write("\n\7\f\7\16\7O\13\7\3\b\3\b\3\b\3\b\3\t\3\t\3\t\5\tX\n")
+        buf.write("\t\3\n\3\n\3\n\3\n\7\n^\n\n\f\n\16\na\13\n\5\nc\n\n\3")
+        buf.write("\n\3\n\3\13\3\13\3\13\3\13\3\13\3\13\3\13\5\13n\n\13\3")
+        buf.write("\13\3\13\3\13\3\13\3\13\3\13\3\13\3\13\5\13x\n\13\3\13")
+        buf.write("\3\13\7\13|\n\13\f\13\16\13\177\13\13\5\13\u0081\n\13")
+        buf.write("\3\13\3\13\3\f\3\f\3\f\7\f\u0088\n\f\f\f\16\f\u008b\13")
+        buf.write("\f\3\r\3\r\3\r\2\2\16\2\4\6\b\n\f\16\20\22\24\26\30\2")
+        buf.write("\3\3\2\21\24\2\u0093\2\32\3\2\2\2\4%\3\2\2\2\6\66\3\2")
+        buf.write("\2\2\b=\3\2\2\2\nE\3\2\2\2\fG\3\2\2\2\16P\3\2\2\2\20W")
+        buf.write("\3\2\2\2\22Y\3\2\2\2\24f\3\2\2\2\26\u0084\3\2\2\2\30\u008c")
+        buf.write("\3\2\2\2\32\33\7\3\2\2\33\34\7\24\2\2\34\36\7\n\2\2\35")
+        buf.write("\37\5\4\3\2\36\35\3\2\2\2\37 \3\2\2\2 \36\3\2\2\2 !\3")
+        buf.write("\2\2\2!\"\3\2\2\2\"#\7\13\2\2#\3\3\2\2\2$&\7\4\2\2%$\3")
+        buf.write("\2\2\2%&\3\2\2\2&\'\3\2\2\2\'(\7\24\2\2()\7\7\2\2)*\5")
+        buf.write("\6\4\2*+\7\6\2\2+-\7\b\2\2,.\5\b\5\2-,\3\2\2\2-.\3\2\2")
+        buf.write("\2./\3\2\2\2/\61\7\t\2\2\60\62\5\f\7\2\61\60\3\2\2\2\61")
+        buf.write("\62\3\2\2\2\62\64\3\2\2\2\63\65\7\17\2\2\64\63\3\2\2\2")
+        buf.write("\64\65\3\2\2\2\65\5\3\2\2\2\66\67\7\5\2\2\679\7\f\2\2")
+        buf.write("8:\5\26\f\298\3\2\2\29:\3\2\2\2:;\3\2\2\2;<\7\r\2\2<\7")
+        buf.write("\3\2\2\2=B\5\n\6\2>?\7\20\2\2?A\5\n\6\2@>\3\2\2\2AD\3")
+        buf.write("\2\2\2B@\3\2\2\2BC\3\2\2\2C\t\3\2\2\2DB\3\2\2\2EF\5\30")
+        buf.write("\r\2F\13\3\2\2\2GH\7\20\2\2HM\5\16\b\2IJ\7\20\2\2JL\5")
+        buf.write("\16\b\2KI\3\2\2\2LO\3\2\2\2MK\3\2\2\2MN\3\2\2\2N\r\3\2")
+        buf.write("\2\2OM\3\2\2\2PQ\7\24\2\2QR\7\7\2\2RS\5\20\t\2S\17\3\2")
+        buf.write("\2\2TX\5\22\n\2UX\5\24\13\2VX\5\30\r\2WT\3\2\2\2WU\3\2")
+        buf.write("\2\2WV\3\2\2\2X\21\3\2\2\2Yb\7\n\2\2Z_\5\30\r\2[\\\7\20")
+        buf.write("\2\2\\^\5\30\r\2][\3\2\2\2^a\3\2\2\2_]\3\2\2\2_`\3\2\2")
+        buf.write("\2`c\3\2\2\2a_\3\2\2\2bZ\3\2\2\2bc\3\2\2\2cd\3\2\2\2d")
+        buf.write("e\7\13\2\2e\23\3\2\2\2f\u0080\7\n\2\2gh\7\f\2\2hi\5\30")
+        buf.write("\r\2ij\7\16\2\2jm\5\30\r\2kl\7\16\2\2ln\5\30\r\2mk\3\2")
+        buf.write("\2\2mn\3\2\2\2no\3\2\2\2o}\7\r\2\2pq\7\20\2\2qr\7\f\2")
+        buf.write("\2rs\5\30\r\2st\7\16\2\2tw\5\30\r\2uv\7\16\2\2vx\5\30")
+        buf.write("\r\2wu\3\2\2\2wx\3\2\2\2xy\3\2\2\2yz\7\r\2\2z|\3\2\2\2")
+        buf.write("{p\3\2\2\2|\177\3\2\2\2}{\3\2\2\2}~\3\2\2\2~\u0081\3\2")
+        buf.write("\2\2\177}\3\2\2\2\u0080g\3\2\2\2\u0080\u0081\3\2\2\2\u0081")
+        buf.write("\u0082\3\2\2\2\u0082\u0083\7\13\2\2\u0083\25\3\2\2\2\u0084")
+        buf.write("\u0089\5\30\r\2\u0085\u0086\7\20\2\2\u0086\u0088\5\30")
+        buf.write("\r\2\u0087\u0085\3\2\2\2\u0088\u008b\3\2\2\2\u0089\u0087")
+        buf.write("\3\2\2\2\u0089\u008a\3\2\2\2\u008a\27\3\2\2\2\u008b\u0089")
+        buf.write("\3\2\2\2\u008c\u008d\t\2\2\2\u008d\31\3\2\2\2\22 %-\61")
+        buf.write("\649BMW_bmw}\u0080\u0089")
         return buf.getvalue()
 
 
@@ -78,7 +79,7 @@ class IDLV2Parser ( Parser ):
     symbolicNames = [ "<INVALID>", "ENTRY", "ROOT", "TYPE", "OPERATION", 
                       "EQUAL", "LPAREN", "RPAREN", "LBRACE", "RBRACE", "LBRACKET", 
                       "RBRACKET", "COLON", "SEMICOLON", "COMMA", "INT", 
-                      "EXPRESSION", "IDENTIFIER", "WS" ]
+                      "NUMBER", "EXPRESSION", "IDENTIFIER", "COMMENT", "WS" ]
 
     RULE_module = 0
     RULE_instruction = 1
@@ -113,9 +114,11 @@ class IDLV2Parser ( Parser ):
     SEMICOLON=13
     COMMA=14
     INT=15
-    EXPRESSION=16
-    IDENTIFIER=17
-    WS=18
+    NUMBER=16
+    EXPRESSION=17
+    IDENTIFIER=18
+    COMMENT=19
+    WS=20
 
     def __init__(self, input:TokenStream, output:TextIO = sys.stdout):
         super().__init__(input, output)
@@ -296,7 +299,7 @@ class IDLV2Parser ( Parser ):
             self.state = 43
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << IDLV2Parser.INT) | (1 << IDLV2Parser.EXPRESSION) | (1 << IDLV2Parser.IDENTIFIER))) != 0):
+            if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << IDLV2Parser.INT) | (1 << IDLV2Parser.NUMBER) | (1 << IDLV2Parser.EXPRESSION) | (1 << IDLV2Parser.IDENTIFIER))) != 0):
                 self.state = 42
                 self.operands()
 
@@ -341,12 +344,12 @@ class IDLV2Parser ( Parser ):
         def LBRACKET(self):
             return self.getToken(IDLV2Parser.LBRACKET, 0)
 
+        def RBRACKET(self):
+            return self.getToken(IDLV2Parser.RBRACKET, 0)
+
         def shape(self):
             return self.getTypedRuleContext(IDLV2Parser.ShapeContext,0)
 
-
-        def RBRACKET(self):
-            return self.getToken(IDLV2Parser.RBRACKET, 0)
 
         def getRuleIndex(self):
             return IDLV2Parser.RULE_result_type
@@ -372,15 +375,22 @@ class IDLV2Parser ( Parser ):
 
         localctx = IDLV2Parser.Result_typeContext(self, self._ctx, self.state)
         self.enterRule(localctx, 4, self.RULE_result_type)
+        self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 52
             self.match(IDLV2Parser.TYPE)
             self.state = 53
             self.match(IDLV2Parser.LBRACKET)
-            self.state = 54
-            self.shape()
             self.state = 55
+            self._errHandler.sync(self)
+            _la = self._input.LA(1)
+            if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << IDLV2Parser.INT) | (1 << IDLV2Parser.NUMBER) | (1 << IDLV2Parser.EXPRESSION) | (1 << IDLV2Parser.IDENTIFIER))) != 0):
+                self.state = 54
+                self.shape()
+
+
+            self.state = 57
             self.match(IDLV2Parser.RBRACKET)
         except RecognitionException as re:
             localctx.exception = re
@@ -438,17 +448,17 @@ class IDLV2Parser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 57
+            self.state = 59
             self.operand()
-            self.state = 62
+            self.state = 64
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while _la==IDLV2Parser.COMMA:
-                self.state = 58
+                self.state = 60
                 self.match(IDLV2Parser.COMMA)
-                self.state = 59
+                self.state = 61
                 self.operand()
-                self.state = 64
+                self.state = 66
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
@@ -498,7 +508,7 @@ class IDLV2Parser ( Parser ):
         self.enterRule(localctx, 8, self.RULE_operand)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 65
+            self.state = 67
             self.value()
         except RecognitionException as re:
             localctx.exception = re
@@ -556,19 +566,19 @@ class IDLV2Parser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 67
+            self.state = 69
             self.match(IDLV2Parser.COMMA)
-            self.state = 68
+            self.state = 70
             self.attribute()
-            self.state = 73
+            self.state = 75
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while _la==IDLV2Parser.COMMA:
-                self.state = 69
+                self.state = 71
                 self.match(IDLV2Parser.COMMA)
-                self.state = 70
+                self.state = 72
                 self.attribute()
-                self.state = 75
+                self.state = 77
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
@@ -624,11 +634,11 @@ class IDLV2Parser ( Parser ):
         self.enterRule(localctx, 12, self.RULE_attribute)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 76
-            self.match(IDLV2Parser.IDENTIFIER)
-            self.state = 77
-            self.match(IDLV2Parser.EQUAL)
             self.state = 78
+            self.match(IDLV2Parser.IDENTIFIER)
+            self.state = 79
+            self.match(IDLV2Parser.EQUAL)
+            self.state = 80
             self.attributeValue()
         except RecognitionException as re:
             localctx.exception = re
@@ -683,24 +693,24 @@ class IDLV2Parser ( Parser ):
         localctx = IDLV2Parser.AttributeValueContext(self, self._ctx, self.state)
         self.enterRule(localctx, 14, self.RULE_attributeValue)
         try:
-            self.state = 83
+            self.state = 85
             self._errHandler.sync(self)
-            la_ = self._interp.adaptivePredict(self._input,7,self._ctx)
+            la_ = self._interp.adaptivePredict(self._input,8,self._ctx)
             if la_ == 1:
                 self.enterOuterAlt(localctx, 1)
-                self.state = 80
+                self.state = 82
                 self.braceList()
                 pass
 
             elif la_ == 2:
                 self.enterOuterAlt(localctx, 2)
-                self.state = 81
+                self.state = 83
                 self.sliceList()
                 pass
 
             elif la_ == 3:
                 self.enterOuterAlt(localctx, 3)
-                self.state = 82
+                self.state = 84
                 self.value()
                 pass
 
@@ -767,29 +777,29 @@ class IDLV2Parser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 85
+            self.state = 87
             self.match(IDLV2Parser.LBRACE)
-            self.state = 94
+            self.state = 96
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << IDLV2Parser.INT) | (1 << IDLV2Parser.EXPRESSION) | (1 << IDLV2Parser.IDENTIFIER))) != 0):
-                self.state = 86
+            if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << IDLV2Parser.INT) | (1 << IDLV2Parser.NUMBER) | (1 << IDLV2Parser.EXPRESSION) | (1 << IDLV2Parser.IDENTIFIER))) != 0):
+                self.state = 88
                 self.value()
-                self.state = 91
+                self.state = 93
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 while _la==IDLV2Parser.COMMA:
-                    self.state = 87
+                    self.state = 89
                     self.match(IDLV2Parser.COMMA)
-                    self.state = 88
+                    self.state = 90
                     self.value()
-                    self.state = 93
+                    self.state = 95
                     self._errHandler.sync(self)
                     _la = self._input.LA(1)
 
 
 
-            self.state = 96
+            self.state = 98
             self.match(IDLV2Parser.RBRACE)
         except RecognitionException as re:
             localctx.exception = re
@@ -871,65 +881,65 @@ class IDLV2Parser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 98
+            self.state = 100
             self.match(IDLV2Parser.LBRACE)
-            self.state = 124
+            self.state = 126
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             if _la==IDLV2Parser.LBRACKET:
-                self.state = 99
-                self.match(IDLV2Parser.LBRACKET)
-                self.state = 100
-                self.value()
                 self.state = 101
-                self.match(IDLV2Parser.COLON)
+                self.match(IDLV2Parser.LBRACKET)
                 self.state = 102
                 self.value()
-                self.state = 105
+                self.state = 103
+                self.match(IDLV2Parser.COLON)
+                self.state = 104
+                self.value()
+                self.state = 107
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 if _la==IDLV2Parser.COLON:
-                    self.state = 103
+                    self.state = 105
                     self.match(IDLV2Parser.COLON)
-                    self.state = 104
+                    self.state = 106
                     self.value()
 
 
-                self.state = 107
+                self.state = 109
                 self.match(IDLV2Parser.RBRACKET)
-                self.state = 121
+                self.state = 123
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 while _la==IDLV2Parser.COMMA:
-                    self.state = 108
-                    self.match(IDLV2Parser.COMMA)
-                    self.state = 109
-                    self.match(IDLV2Parser.LBRACKET)
                     self.state = 110
-                    self.value()
+                    self.match(IDLV2Parser.COMMA)
                     self.state = 111
-                    self.match(IDLV2Parser.COLON)
+                    self.match(IDLV2Parser.LBRACKET)
                     self.state = 112
                     self.value()
-                    self.state = 115
+                    self.state = 113
+                    self.match(IDLV2Parser.COLON)
+                    self.state = 114
+                    self.value()
+                    self.state = 117
                     self._errHandler.sync(self)
                     _la = self._input.LA(1)
                     if _la==IDLV2Parser.COLON:
-                        self.state = 113
+                        self.state = 115
                         self.match(IDLV2Parser.COLON)
-                        self.state = 114
+                        self.state = 116
                         self.value()
 
 
-                    self.state = 117
+                    self.state = 119
                     self.match(IDLV2Parser.RBRACKET)
-                    self.state = 123
+                    self.state = 125
                     self._errHandler.sync(self)
                     _la = self._input.LA(1)
 
 
 
-            self.state = 126
+            self.state = 128
             self.match(IDLV2Parser.RBRACE)
         except RecognitionException as re:
             localctx.exception = re
@@ -987,17 +997,17 @@ class IDLV2Parser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 128
+            self.state = 130
             self.value()
-            self.state = 133
+            self.state = 135
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while _la==IDLV2Parser.COMMA:
-                self.state = 129
+                self.state = 131
                 self.match(IDLV2Parser.COMMA)
-                self.state = 130
+                self.state = 132
                 self.value()
-                self.state = 135
+                self.state = 137
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
@@ -1019,6 +1029,9 @@ class IDLV2Parser ( Parser ):
 
         def INT(self):
             return self.getToken(IDLV2Parser.INT, 0)
+
+        def NUMBER(self):
+            return self.getToken(IDLV2Parser.NUMBER, 0)
 
         def IDENTIFIER(self):
             return self.getToken(IDLV2Parser.IDENTIFIER, 0)
@@ -1053,9 +1066,9 @@ class IDLV2Parser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 136
+            self.state = 138
             _la = self._input.LA(1)
-            if not((((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << IDLV2Parser.INT) | (1 << IDLV2Parser.EXPRESSION) | (1 << IDLV2Parser.IDENTIFIER))) != 0)):
+            if not((((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << IDLV2Parser.INT) | (1 << IDLV2Parser.NUMBER) | (1 << IDLV2Parser.EXPRESSION) | (1 << IDLV2Parser.IDENTIFIER))) != 0)):
                 self._errHandler.recoverInline(self)
             else:
                 self._errHandler.reportMatch(self)

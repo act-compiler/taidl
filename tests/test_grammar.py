@@ -34,6 +34,17 @@ def lexed(rule):
     return re.findall(r"'([^']+)'", body)
 
 
+class TestComments:
+    def test_comment_skipped(self):
+        text = '// the copy\n' + spec('// its one line', 'ROOT %Out0 = f32[4] copy(%In1); // done')
+        tree = parse(text)
+        assert [line.OPERATION().getText() for line in tree.instruction()] == ['parameter', 'copy']
+
+    def test_floor_division_stays_in_an_expression(self):
+        tree = parse(spec('ROOT %Out0 = f32[`@c.n // 2`] copy(%In1);'))
+        assert tree.instruction(1).result_type().shape().getText() == '`@c.n // 2`'
+
+
 # The operation words by family
 FAMILIES = {
     'inputs and constants': 'parameter constant iota',
@@ -83,3 +94,48 @@ class TestWords:
     def test_type(self, typ):
         tree = parse(spec(f'ROOT %Out0 = {typ}[4] convert(%In1);'))
         assert tree.instruction(1).result_type().TYPE().getText() == typ
+
+
+class TestLiterals:
+    @pytest.mark.parametrize(
+        'text', ['-1', '-0', '0.5', '-2.5', '1e-3', '-6.25E+2', 'inf', '-inf', 'nan']
+    )
+    def test_number_operand(self, text):
+        tree = parse(spec(f'ROOT %Out0 = f32[1] constant({text});'))
+        value = tree.instruction(1).operands().operand(0).value()
+        assert value.NUMBER().getText() == text
+
+    @pytest.mark.parametrize('text', ['info', 'nano', 'inf_x', '%inf'])
+    def test_longer_word_stays_identifier(self, text):
+        tree = parse(spec(f'ROOT %Out0 = f32[1] constant({text});'))
+        value = tree.instruction(1).operands().operand(0).value()
+        assert value.IDENTIFIER().getText() == text
+
+    def test_integer_stays_int(self):
+        tree = parse(spec('ROOT %Out0 = s32[1] constant(7);'))
+        value = tree.instruction(1).operands().operand(0).value()
+        assert value.INT().getText() == '7'
+        assert value.NUMBER() is None
+
+    def test_number_attribute(self):
+        tree = parse(spec('ROOT %Out0 = f32[4] power(%In1), exponent=-0.5;'))
+        value = tree.instruction(1).attributes().attribute(0).attributeValue().value()
+        assert value.NUMBER().getText() == '-0.5'
+
+    def test_number_brace_list(self):
+        tree = parse(spec('ROOT %Out0 = f32[4] constant(), values={-1, 0.5, 2};'))
+        values = tree.instruction(1).attributes().attribute(0).attributeValue().braceList().value()
+        assert [v.getText() for v in values] == ['-1', '0.5', '2']
+        assert [v.NUMBER() is not None for v in values] == [True, True, False]
+
+
+class TestShapes:
+    def test_rank0_result(self):
+        tree = parse(spec('ROOT %Out0 = f32[] constant(-1);'))
+        result = tree.instruction(1).result_type()
+        assert result.TYPE().getText() == 'f32'
+        assert result.shape() is None
+
+    def test_ranked_result(self):
+        tree = parse(spec('ROOT %Out0 = f32[`@c.n`,4] broadcast(%In1), dimensions={1};'))
+        assert tree.instruction(1).result_type().shape().getText() == '`@c.n`,4'

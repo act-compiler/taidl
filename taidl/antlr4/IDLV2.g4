@@ -6,7 +6,7 @@ module         : ENTRY IDENTIFIER LBRACE instruction+ RBRACE ;
 
 instruction    : ROOT? IDENTIFIER EQUAL result_type OPERATION LPAREN operands? RPAREN attributes? SEMICOLON? ;
 
-result_type    : TYPE LBRACKET shape RBRACKET ;
+result_type    : TYPE LBRACKET shape? RBRACKET ;
 
 operands       : operand (COMMA operand)* ;
 operand        : value ;
@@ -20,7 +20,7 @@ sliceList      : LBRACE ( LBRACKET value COLON value (COLON value)? RBRACKET (CO
 
 shape          : value (COMMA value)* ;
 
-value          : INT | IDENTIFIER | EXPRESSION ;
+value          : INT | NUMBER | IDENTIFIER | EXPRESSION ;
 
 // === Lexer Rules ===
 
@@ -82,6 +82,10 @@ COMMA    : ',' ;
 
 // Tokens
 INT        : [0-9]+ ;
+// Signed, fractional, exponent or non-finite; a bare integer stays INT
+NUMBER     : '-'? ([0-9]+ ('.' [0-9]+)? ([eE] [+-]? [0-9]+)? | 'inf' | 'nan') ;
 EXPRESSION : '`' (~'`')* '`' ;
 IDENTIFIER : '%'?[a-zA-Z_@][a-zA-Z0-9_.@]* ;
+// A comment runs to the end of its line
+COMMENT    : '//' ~[\r\n]* -> skip ;
 WS         : [ \t\r\n]+ -> skip ;
