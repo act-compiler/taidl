@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# Run from docker/ directory
+# Change to script directory
 cd "$(dirname "$0")"
 
 CONTAINER_MOUNT="/workspace"
