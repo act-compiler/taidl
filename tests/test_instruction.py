@@ -19,6 +19,27 @@ def two_inputs():
     return instr
 
 
+class TestConstraints:
+    def test_add_constraints_appends(self):
+        instr = make().add_instruction('t', ['n'], ['x'], constraints=['@c.n <= 4'])
+        instr.add_constraints('@a.x >= 0\n\n@a.x < 64')
+        instr.add_constraints('@c.n >= 1')
+        assert instr.constraints == ['@c.n <= 4', '@a.x >= 0', '@a.x < 64', '@c.n >= 1']
+
+
+class TestFreshLists:
+    @pytest.mark.parametrize(
+        'field, line', [('update', '@s.busy = 1'), ('constraints', '@a.x >= 0')]
+    )
+    def test_fresh_list_per_instruction(self, field, line):
+        acc = make()
+        given = [line]
+        getattr(acc.add_instruction('a', [], ['x'], **{field: given}), field).append(line)
+        getattr(acc.add_instruction('b', [], ['x']), field).append(line)
+        assert given == [line]
+        assert getattr(acc.add_instruction('c', [], ['x']), field) == []
+
+
 # t's semantics over the given parameters, %Out0 copying %In0
 def semantics(*parameters):
     lines = [f'%In{k} = s8[1,16] parameter({k});' for k in parameters]

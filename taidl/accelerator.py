@@ -3,7 +3,7 @@
 import os
 import inspect
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Sequence
 
 from .data_model import Constant, DataModel
 from .instruction import Instruction
@@ -45,8 +45,8 @@ class Accelerator:
         computation_attr: List[str],
         addressing_attr: List[str],
         cost: str = '0',
-        update: List[str] = [],
-        constraints: List[str] = [],
+        update: Sequence[str] = (),
+        constraints: Sequence[str] = (),
     ) -> Instruction:
         new_instruction = Instruction(
             instruction,
