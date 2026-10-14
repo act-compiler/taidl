@@ -74,14 +74,14 @@ class Instruction:
     def set_inputs(self, inputs: List[Tuple[str, List[str], List[str]]]):
         if self.instr_semantics_ast is not None:
             self.check_values(self.instr_semantics_ast, 'input', inputs)
-        self.instr_inputs = inputs
+        self.instr_inputs = list(inputs)
         self.inplace = [False] * len(inputs)
         self.inputs_given = True
 
     def set_outputs(self, outputs: List[Tuple[str, List[str], List[str]]]):
         if self.instr_semantics_ast is not None:
             self.check_values(self.instr_semantics_ast, 'output', outputs)
-        self.instr_outputs = outputs
+        self.instr_outputs = list(outputs)
         self.outputs_given = True
 
     def check_values(
@@ -112,7 +112,7 @@ class Instruction:
         """Mark the inputs this instruction overwrites, one flag per input; set_inputs resets them."""
         if len(inplace) != len(self.instr_inputs):
             raise ValueError(f'{self.instruction}: set_inplace needs one flag per input')
-        self.inplace = inplace
+        self.inplace = list(inplace)
 
     def set_apart(self, apart: List[bool]):
         """Mark the inputs the output never overlaps, one flag per input.
