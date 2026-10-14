@@ -51,6 +51,38 @@ class TestNames:
             GIVE[kind](name)
 
 
+class TestNamesGivenTwice:
+    def test_data_model(self):
+        with pytest.raises(ValueError, match="data model name 'd1' is given twice"):
+            make().add_data_model('d1', [4], [4], 's8')
+
+    def test_off_chip_memory(self):
+        with pytest.raises(ValueError, match="data model name 'd0' is given twice"):
+            make().add_data_model('d0', [4], [4], 'u8')
+
+    def test_state(self):
+        acc = make()
+        acc.add_initial_state('busy', 0)
+        with pytest.raises(ValueError, match="state name 'busy' is given twice"):
+            acc.add_initial_state('busy', 1)
+
+    def test_instruction(self):
+        acc = make()
+        acc.add_instruction('t', [], [])
+        with pytest.raises(ValueError, match="instruction name 't' is given twice"):
+            acc.add_instruction('t', [], [])
+        assert [instr.instruction for instr in acc.instructions] == ['t']
+
+    @pytest.mark.parametrize(
+        'attrs',
+        [(['n', 'n'], []), ([], ['x', 'n', 'x']), (['n'], ['x', 'n'])],
+        ids=['computation', 'addressing', 'both'],
+    )
+    def test_attribute(self, attrs):
+        with pytest.raises(ValueError, match="t: attribute name '[nx]' is given twice"):
+            make().add_instruction('t', *attrs)
+
+
 class TestParameterNames:
     def test_every_parameter_by_keyword(self):
         acc = Accelerator(name='Instr', base_dir='.')
