@@ -54,12 +54,7 @@ class DataModel:
         self.num_dim_str = self.create_num_str()
 
     def create_arr_str(self, dims) -> str:
-        output = '['
-        for dim in dims:
-            output += f"'{dim}',"
-        output = output[:-1]
-        output += ']'
-        return output
+        return '[' + ','.join(f"'{dim}'" for dim in dims) + ']'
 
     def create_num_str(self) -> str:
         output = '{'

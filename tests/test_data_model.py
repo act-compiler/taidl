@@ -2,8 +2,23 @@ import re
 
 import pytest
 
-from taidl import Accelerator
+from taidl import Accelerator, DataModel
 from taidl.data_model import TYPES
+
+
+class TestDerivedStrings:
+    def test_buffer(self):
+        model = DataModel('d1', [128], [64], 'bf16')
+        assert model.var_dim == [128, 64]
+        assert model.array_dim_str == "['128','64']"
+        assert model.num_dim_str == '{1,0}'
+
+    def test_hbm(self):
+        d0 = Accelerator('Model', base_dir='.').data_model[0]
+        assert (d0.var_name, d0.var_type) == ('d0', 'u8')
+        assert d0.var_dim == []
+        assert d0.array_dim_str == '[]'
+        assert d0.num_dim_str == '{}'
 
 
 class TestDimensions:
