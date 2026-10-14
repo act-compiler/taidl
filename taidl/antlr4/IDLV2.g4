@@ -2,7 +2,7 @@ grammar IDLV2;
 
 // === Parser Rules ===
 
-module          : ENTRY name LBRACE instruction+ RBRACE ;
+module          : ENTRY name LBRACE instruction+ RBRACE EOF ;
 
 instruction     : ROOT? IDENTIFIER EQUAL result_type OPERATION LPAREN operands? RPAREN attributes? SEMICOLON? ;
 
@@ -92,3 +92,5 @@ IDENTIFIER : '%'?[a-zA-Z_@][a-zA-Z0-9_.@]* ;
 // A comment runs to the end of its line
 COMMENT    : '//' ~[\r\n]* -> skip ;
 WS         : [ \t\r\n]+ -> skip ;
+// Any other character, which no parser rule accepts
+ERROR_CHAR : . ;

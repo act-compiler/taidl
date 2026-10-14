@@ -37,6 +37,29 @@ def lexed(rule):
 COPY = 'ROOT %Out0 = f32[4] copy(%In0);'
 
 
+class TestStrict:
+    def test_clean_spec_parses(self):
+        tree = parse(spec('ROOT %Out0 = f32[4] copy(%In0);'))
+        assert tree.instruction(1).OPERATION().getText() == 'copy'
+
+    @pytest.mark.parametrize(
+        'line',
+        [
+            'ROOT %Out0 = f32[4] add(%In0, -%In0);',
+            'ROOT %Out0 = f32[4] copy($%In0);',
+            'ROOT %Out0 = f32[4] copy(%In0);!',
+        ],
+        ids=['sign_alone', 'in_operands', 'after_semicolon'],
+    )
+    def test_unknown_character_fails(self, line):
+        with pytest.raises(SyntaxError):
+            parse(spec(line))
+
+    def test_text_after_module_fails(self):
+        with pytest.raises(SyntaxError):
+            parse(spec('ROOT %Out0 = f32[4] copy(%In0);') + '}')
+
+
 class TestComments:
     def test_comment_skipped(self):
         text = '// the copy\n' + spec('// its one line', 'ROOT %Out0 = f32[4] copy(%In0); // done')
