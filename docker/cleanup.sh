@@ -39,7 +39,7 @@ for line in "${CONTAINERS[@]}"; do
   case "${RESP}" in
     y | Y)
       echo "Removing ${CNAME}..."
-      docker rm -f "${CID}" || { echo "Failed to remove ${CNAME}"; }
+      docker rm -f "${CID}"
       ;;
     *)
       echo "Keeping ${CNAME}."
