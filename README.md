@@ -52,7 +52,7 @@ ANTLR_JAR=/path/to/antlr-4.9.2-complete.jar ./taidl/antlr4/generate.sh
 
 TAIDL is a pure data model + language parser. It stores:
 
-- Accelerator metadata (name, constants, state)
+- Accelerator metadata (name, state)
 - Data model definitions (memory spaces with dimensions and types)
 - Instruction definitions (parameters, constraints, inputs/outputs)
 - Parsed semantics AST (ANTLR4 parse tree)

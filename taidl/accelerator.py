@@ -12,7 +12,6 @@ from .instruction import Instruction
 @dataclass
 class Accelerator:
     name: str
-    constants: List[Constant]
     data_model: List[DataModel]
     state: List[Constant]
     instructions: List[Instruction] = field(init=False)
@@ -20,7 +19,6 @@ class Accelerator:
 
     def __init__(self, name: str, base_dir: str = None):
         self.name = name.replace(' ', '_')
-        self.constants = []
         self.instructions = []
         self.state = []
         self.data_model = []
@@ -35,29 +33,28 @@ class Accelerator:
         self.add_data_model('d0', [], [], 'u8')
 
     def add_data_model(
-        self, model_name: str, dimensions: List[int], unit_dim: List[int], var_type: str
+        self, name: str, dimensions: List[int], unit_dim: List[int], var_type: str
     ) -> None:
-        self.data_model.append(DataModel(model_name, dimensions, unit_dim, var_type))
+        self.data_model.append(DataModel(name, dimensions, unit_dim, var_type))
 
-    def add_initial_state(self, state_name: str, value: int) -> None:
-        """Declare a machine state variable, @s.<state_name>, with its initial value."""
-        self.state.append(Constant(state_name, value))
+    def add_initial_state(self, name: str, value: int) -> None:
+        """Declare a machine state variable, @s.<name>, with its initial value."""
+        self.state.append(Constant(name, value))
 
     def add_instruction(
         self,
-        instruction: str,
+        name: str,
         computation_attr: List[str],
         addressing_attr: List[str],
-        cost: str = '0',
+        *,
         update: Sequence[str] = (),
         constraints: Sequence[str] = (),
     ) -> Instruction:
         new_instruction = Instruction(
-            instruction,
+            name,
             computation_attr,
             addressing_attr,
             constraints,
-            cost,
             update,
             self.data_model,
         )
