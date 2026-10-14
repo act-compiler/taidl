@@ -18,9 +18,9 @@ def parse(semantics):
     return instr.instr_semantics_ast
 
 
-def spec(*lines):
+def spec(*lines, entry='t'):
     return (
-        'ENTRY t {\n    %In1 = f32[4] parameter(0);\n'
+        f'ENTRY {entry} {{\n    %In1 = f32[4] parameter(0);\n'
         + ''.join(f'    {line}\n' for line in lines)
         + '}\n'
     )
@@ -139,3 +139,37 @@ class TestShapes:
     def test_ranked_result(self):
         tree = parse(spec('ROOT %Out0 = f32[`@c.n`,4] broadcast(%In1), dimensions={1};'))
         assert tree.instruction(1).result_type().shape().getText() == '`@c.n`,4'
+
+
+class TestEntry:
+    def test_identifier_name(self):
+        tree = parse(spec('ROOT %Out0 = f32[4] copy(%In1);'))
+        assert tree.name().getText() == 't'
+        assert tree.name().IDENTIFIER() is not None
+
+    @pytest.mark.parametrize('op', ['copy', 'and', 'reduce_add'])
+    def test_operation_name(self, op):
+        tree = parse(spec('ROOT %Out0 = f32[4] copy(%In1);', entry=op))
+        assert tree.name().getText() == op
+        assert tree.name().OPERATION() is not None
+
+
+class TestAttributes:
+    def test_identifier_name(self):
+        tree = parse(spec('ROOT %Out0 = f32[4] broadcast(%In1), dimensions={0};'))
+        attribute = tree.instruction(1).attributes().attribute(0)
+        assert attribute.name().getText() == 'dimensions'
+        assert attribute.name().IDENTIFIER() is not None
+
+    @pytest.mark.parametrize('op', ['slice', 'select', 'dot'])
+    def test_operation_name(self, op):
+        tree = parse(spec(f'ROOT %Out0 = f32[4] copy(%In1), {op}=1;'))
+        attribute = tree.instruction(1).attributes().attribute(0)
+        assert attribute.name().getText() == op
+        assert attribute.name().OPERATION() is not None
+
+    def test_slice_list(self):
+        tree = parse(spec('ROOT %Out0 = f32[2] slice(%In1), slice={[0:4:2]};'))
+        attribute = tree.instruction(1).attributes().attribute(0)
+        assert attribute.name().getText() == 'slice'
+        assert attribute.attributeValue().sliceList().getText() == '{[0:4:2]}'
