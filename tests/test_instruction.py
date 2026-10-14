@@ -1,5 +1,3 @@
-"""Tests for the instruction API"""
-
 import importlib.util
 import inspect
 import os

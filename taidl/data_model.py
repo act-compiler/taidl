@@ -1,5 +1,3 @@
-"""Data model definitions for TAIDLv2"""
-
 from dataclasses import dataclass
 
 # The element types, as the grammar's TYPE rule lexes them

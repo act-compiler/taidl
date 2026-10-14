@@ -1,5 +1,3 @@
-"""Instruction set definitions for TAIDLv2"""
-
 import re
 from collections.abc import Sequence
 

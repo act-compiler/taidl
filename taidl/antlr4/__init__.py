@@ -1,5 +1,3 @@
-"""ANTLR4 generated parser and lexer for TAIDLv2"""
-
 from .IDLV2Lexer import IDLV2Lexer
 from .IDLV2Parser import IDLV2Parser
 from .IDLV2Visitor import IDLV2Visitor
