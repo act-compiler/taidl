@@ -5,8 +5,8 @@ from typing import List
 
 
 @dataclass
-class Constant:
-    const_name: str
+class State:
+    name: str
     value: int
 
 

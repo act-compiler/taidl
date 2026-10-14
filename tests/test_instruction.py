@@ -3,7 +3,7 @@
 import re
 
 import pytest
-from taidl import Accelerator, Constant
+from taidl import Accelerator, State
 
 
 def make():
@@ -27,7 +27,7 @@ class TestParameterNames:
         instr = acc.add_instruction(name='t', computation_attr=['n'], addressing_attr=['x'])
         assert (instr.instruction, instr.comp_attr, instr.parameters) == ('t', ['n'], ['x'])
         assert [model.var_name for model in acc.data_model] == ['d0', 'd1']
-        assert acc.state == [Constant('busy', 0)]
+        assert acc.state == [State('busy', 0)]
 
 
 class TestConstraints:
@@ -210,13 +210,17 @@ class TestInitialState:
         acc = make()
         acc.add_initial_state('preload', 0)
         acc.add_initial_state('fifo_occupancy', 2)
-        assert acc.state == [Constant('preload', 0), Constant('fifo_occupancy', 2)]
+        assert acc.state == [State('preload', 0), State('fifo_occupancy', 2)]
+        assert [(state.name, state.value) for state in acc.state] == [
+            ('preload', 0),
+            ('fifo_occupancy', 2),
+        ]
 
     def test_update_kept(self):
         acc = make()
         acc.add_initial_state('busy', 0)
         instr = acc.add_instruction('t', [], ['x'], update=['@s.busy = 1'])
-        assert (acc.state, instr.update) == ([Constant('busy', 0)], ['@s.busy = 1'])
+        assert (acc.state, instr.update) == ([State('busy', 0)], ['@s.busy = 1'])
 
 
 # t's semantics over the given parameters, %Out0 copying %In0
