@@ -1,6 +1,7 @@
 # TAIDL: Tensor Accelerator ISA Definition Language
 
-TAIDL is a domain-specific language designed to define instruction set architectures (ISAs) for tensor accelerators. It provides a flexible and extensible framework for specifying the operations, data types, and memory models of tensor accelerators.
+TAIDL is a domain-specific language that defines the instruction set architecture (ISA) of a tensor accelerator.
+A spec declares the accelerator's buffers and its instructions, and gives each instruction's meaning as a block of tensor operations.
 
 TAIDL is an integral part of the [ACT Ecosystem](https://github.com/act-compiler/act), enabling automated generation of:
 
@@ -27,8 +28,8 @@ pip install -e .
 
 ## Examples
 
-- `QKV.py` — QKV attention accelerator
-- `QKV_new.py` — variant of QKV
+- `examples/QKV.py`: QKV attention accelerator
+- `examples/QKV_new.py`: variant of QKV with a third buffer
 
 ## Testing
 
@@ -40,8 +41,33 @@ pip install -e .
 
 ## Specs
 
+A spec is a Python program that builds an `Accelerator`: its data models, then its instructions.
+
+```python
+from taidl import Accelerator
+
+acc = Accelerator('Demo')
+
+# d1: 128 rows of 64 bf16 values
+acc.add_data_model('d1', [128], [64], 'bf16')
+
+# load: n rows from the off-chip memory into d1
+instr = acc.add_instruction('load', ['n'], ['addr_in', 'addr_out'])
+instr.set_inputs([['d0', ['@a.addr_in'], ['@c.n * 128']]])
+instr.set_outputs([['d1', ['@a.addr_out'], ['@c.n']]])
+instr.add_semantics("""
+ENTRY {
+    %In0 = u8[`@c.n * 128`] parameter(0);
+    %a = u8[`@c.n`,64,2] reshape(%In0);
+    ROOT %Out0 = bf16[`@c.n`,64] bitcast_convert(%a);
+}
+""")
+```
+
 The language is documented under `docs/`:
 
+- `docs/declarations.md`: the accelerator, its data models, its regions and the names a spec gives
+- `docs/instructions.md`: an instruction, its attributes, constraints, in-place and placement marks, and machine state
 - `docs/semantics.md`: the text of a semantics, its types, shapes, operands and attributes, and what is refused
 - `docs/expressions.md`: expressions, constraints and state updates
 - `docs/operations.md`: the operation words, what each takes, and the operations that stay out
@@ -55,14 +81,3 @@ After editing a grammar, regenerate them with the ANTLR 4.9.2 tool, which matche
 ```bash
 ANTLR_JAR=/path/to/antlr-4.9.2-complete.jar ./taidl/antlr4/generate.sh
 ```
-
-## Implementation Details
-
-TAIDL is a pure data model + language parser. It stores:
-
-- Accelerator metadata (name, state)
-- Data model definitions (memory spaces with dimensions and types)
-- Instruction definitions (parameters, constraints, inputs/outputs)
-- Parsed semantics AST (ANTLR4 parse tree)
-
-Generators (TAIDL-TO, ACT-Backend) consume the `Accelerator` object and its pre-parsed ASTs to produce target-specific software tools.
