@@ -157,6 +157,16 @@ class TestFreshLists:
         assert instr.instr_outputs == [['d1', ['@a.o'], ['1']]]
         assert instr.inplace == [True]
 
+    @pytest.mark.parametrize('kind', ['input', 'output'])
+    def test_region_starts_and_sizes_copied(self, kind):
+        instr = make().add_instruction('t', [], ['x', 'y'])
+        region = ['d1', ['@a.x'], ['1']]
+        getattr(instr, f'set_{kind}s')([region])
+        region[0], region[1][0], region[2][0] = 'd0', '@a.y', '2'
+        assert getattr(instr, f'instr_{kind}s') == [['d1', ['@a.x'], ['1']]]
+        buffer, starts, sizes = getattr(instr, f'instr_{kind}_asts')[0]
+        assert (buffer, starts[0].getText(), sizes[0].getText()) == ('d1', '@a.x', '1')
+
 
 class TestBuffers:
     def test_find_data_model(self):

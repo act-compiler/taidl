@@ -100,7 +100,7 @@ class Instruction:
         trees = self.parse_regions(inputs)
         if self.instr_semantics_ast is not None:
             self.check_values(self.instr_semantics_ast, 'input', inputs)
-        self.instr_inputs, self.instr_input_asts = list(inputs), trees
+        self.instr_inputs, self.instr_input_asts = copies(inputs), trees
         self.inplace = [False] * len(inputs)
         self.drop_marks()
         self.inputs_given = True
@@ -110,7 +110,7 @@ class Instruction:
         trees = self.parse_regions(outputs)
         if self.instr_semantics_ast is not None:
             self.check_values(self.instr_semantics_ast, 'output', outputs)
-        self.instr_outputs, self.instr_output_asts = list(outputs), trees
+        self.instr_outputs, self.instr_output_asts = copies(outputs), trees
         self.drop_marks()
         self.outputs_given = True
 
@@ -411,6 +411,11 @@ def strings(instruction: str, what: str, given: Sequence[str]) -> List[str]:
     if isinstance(given, str):
         raise TypeError(f'{instruction}: {what} takes a list of strings, not one string')
     return list(given)
+
+
+def copies(regions: Sequence[Region]) -> list[Region]:
+    """A copy of each region, with its starts and its sizes."""
+    return [[buffer, list(starts), list(sizes)] for buffer, starts, sizes in regions]
 
 
 def term(expr: Extent) -> str:
