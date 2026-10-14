@@ -1,13 +1,16 @@
 """Tests for the instruction API"""
 
+import importlib.util
 import inspect
 import os
 import re
 import runpy
+import types
 
 import pytest
 from taidl import Accelerator, Instruction, State
 
+EXAMPLES_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'examples')
 README = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'README.md')
 DOCS = os.path.join(os.path.dirname(README), 'docs')
 
@@ -23,6 +26,13 @@ def two_inputs():
     instr.set_inputs([['d1', ['@a.x'], ['@c.n']], ['d1', ['@a.y + 1'], ['1']]])
     instr.set_outputs([['d1', ['@a.o'], ['@c.n']]])
     return instr
+
+
+def example(name):
+    spec = importlib.util.spec_from_file_location(name, os.path.join(EXAMPLES_DIR, f'{name}.py'))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.qkv
 
 
 # Each kind of name's declaration, keyed by its refusal's prefix
@@ -87,6 +97,21 @@ class TestNamesGivenTwice:
     def test_attribute(self, attrs):
         with pytest.raises(ValueError, match="t: attribute name '[nx]' is given twice"):
             make().add_instruction('t', *attrs)
+
+
+class TestBaseDir:
+    def test_given(self):
+        assert Accelerator('Dir', base_dir='/somewhere').base_dir == '/somewhere'
+
+    def test_defaults_to_the_directory_of_the_spec(self):
+        assert Accelerator('Dir').base_dir == os.path.dirname(os.path.abspath(__file__))
+        assert example('QKV').base_dir == EXAMPLES_DIR
+
+    def test_defaults_to_the_working_directory_without_a_file(self):
+        # A caller with no file, as in an interactive session
+        code = compile("Accelerator('Dir')", '<stdin>', 'eval')
+        acc = types.FunctionType(code, {'Accelerator': Accelerator})()
+        assert acc.base_dir == os.getcwd()
 
 
 class TestParameterNames:
@@ -441,6 +466,26 @@ class TestInitialState:
         acc.add_initial_state('busy', 0)
         instr = acc.add_instruction('t', [], ['x'], update=['@s.busy = 1'])
         assert (acc.state, instr.update) == ([State('busy', 0)], ['@s.busy = 1'])
+
+
+class TestSemantics:
+    def test_none_without_add_semantics(self):
+        acc = make()
+        acc.add_initial_state('mode', 0)
+        instr = acc.add_instruction('config', ['mode'], [], update=['@s.mode = @c.mode'])
+        assert instr.instr_semantics_ast is None
+        assert (instr.instr_inputs, instr.instr_outputs) == ([], [])
+
+    def test_second_add_semantics_replaces_the_first(self):
+        instr = make().add_instruction('t', [], [])
+        for operation in ('copy', 'negate'):
+            instr.add_semantics(f"""
+            ENTRY {{
+                %In0 = s8[1,16] parameter(0);
+                ROOT %Out0 = s8[1,16] {operation}(%In0);
+            }}
+            """)
+            assert instr.instr_semantics_ast.instruction(1).OPERATION().getText() == operation
 
 
 # t's semantics over the given parameters, %Out0 copying %In0
