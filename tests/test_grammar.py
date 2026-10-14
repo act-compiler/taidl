@@ -436,6 +436,18 @@ class TestAttributes:
         assert attribute.name().getText() == 'slice'
         assert attribute.attribute_value().slice_list().getText() == '{[0:4:2]}'
 
+    def test_two_range_slice_list(self):
+        tree = parse(spec('ROOT %Out0 = f32[2,1] slice(%In0), slice={[0:4:2], [1:2]};'))
+        value = tree.instruction(1).attributes().attribute(0).attribute_value()
+        assert value.slice_list().getText() == '{[0:4:2],[1:2]}'
+        assert value.brace_list() is None
+
+    def test_empty_brace_list(self):
+        tree = parse(spec('ROOT %Out0 = f32[4] broadcast(%In0), dimensions={};'))
+        value = tree.instruction(1).attributes().attribute(0).attribute_value()
+        assert value.brace_list().value() == []
+        assert value.slice_list() is None
+
 
 class TestOperations:
     def test_one_row_per_word_in_the_grammars_order(self):

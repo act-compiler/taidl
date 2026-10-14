@@ -1,8 +1,7 @@
 """Instruction set definitions for TAIDLv2"""
 
 import re
-from dataclasses import dataclass
-from typing import List, Optional, Sequence, Tuple
+from typing import List, Optional, Sequence
 
 from antlr4 import CommonTokenStream, InputStream
 from antlr4.error.ErrorListener import ErrorListener
@@ -33,7 +32,6 @@ class SyntaxErrors(ErrorListener):
         self.found.append((line, column + 1, msg))
 
 
-@dataclass
 class Instruction:
     instruction: str
     comp_attr: List[str]
@@ -43,9 +41,8 @@ class Instruction:
     state: list[State]
     update: List[str]
 
-    instr_inputs: List[Tuple[str, List[str], List[str]]]
-    instr_outputs: List[Tuple[str, List[str], List[str]]]
-    instr_semantics_str: str
+    instr_inputs: list[Region]
+    instr_outputs: list[Region]
     instr_semantics_ast: Optional[IDLV2Parser.ModuleContext]
     # Each text above parsed, beside it
     constraint_asts: list[IDLV2ExprParser.ConditionContext]
@@ -82,7 +79,6 @@ class Instruction:
         self.data_models = data_models
         self.instr_inputs, self.instr_input_asts = [], []
         self.instr_outputs, self.instr_output_asts = [], []
-        self.instr_semantics_str = ''
         self.instr_semantics_ast, self.instr_expression_asts = None, {}
         self.inplace = []
         # Which of set_inputs and set_outputs has run
@@ -95,7 +91,7 @@ class Instruction:
                 return model
         raise ValueError(f"{self.instruction}: no data model is named '{name}'")
 
-    def set_inputs(self, inputs: List[Tuple[str, List[str], List[str]]]):
+    def set_inputs(self, inputs: Sequence[Region]):
         self.check_regions(inputs)
         trees = self.parse_regions(inputs)
         if self.instr_semantics_ast is not None:
@@ -104,7 +100,7 @@ class Instruction:
         self.inplace = [False] * len(inputs)
         self.inputs_given = True
 
-    def set_outputs(self, outputs: List[Tuple[str, List[str], List[str]]]):
+    def set_outputs(self, outputs: Sequence[Region]):
         self.check_regions(outputs)
         trees = self.parse_regions(outputs)
         if self.instr_semantics_ast is not None:
@@ -140,10 +136,7 @@ class Instruction:
         ]
 
     def check_values(
-        self,
-        semantics: IDLV2Parser.ModuleContext,
-        kind: str,
-        regions: List[Tuple[str, List[str], List[str]]],
+        self, semantics: IDLV2Parser.ModuleContext, kind: str, regions: Sequence[Region]
     ):
         """Refuse an input or output region without its value, or a value without its region."""
         # Input region k has %In<k>, output region k %Out<k>
@@ -219,7 +212,6 @@ class Instruction:
                 raise ValueError(f"{name}: {method} marks an input at the output's own starts")
 
     def add_semantics(self, semantics: str):
-        self.instr_semantics_str = semantics
         tree = self.parse_semantics(semantics)
         # Each backtick expression, by its node in the tree
         expressions = {
@@ -233,7 +225,7 @@ class Instruction:
             self.check_values(tree, 'output', self.instr_outputs)
         self.instr_semantics_ast, self.instr_expression_asts = tree, expressions
 
-    def parse_semantics(self, semantics: str):
+    def parse_semantics(self, semantics: str) -> IDLV2Parser.ModuleContext:
         """Parse semantics into AST eagerly to catch syntax errors early"""
         tree, errors = parse(IDLV2Lexer, IDLV2Parser, 'module', semantics)
         if errors:
@@ -387,7 +379,7 @@ def strings(instruction: str, what: str, given: Sequence[str]) -> List[str]:
     return list(given)
 
 
-def term(expr) -> str:
+def term(expr: Extent) -> str:
     """One start or size as a constraint term, bracketed unless a single token."""
     text = str(expr).strip()
     return text if re.fullmatch(r'@?[\w.]+', text) else f'({text})'

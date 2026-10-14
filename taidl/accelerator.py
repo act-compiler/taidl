@@ -2,7 +2,6 @@
 
 import os
 import inspect
-from dataclasses import dataclass, field
 from typing import List, Sequence
 
 from .data_model import TYPES, DataModel, State
@@ -10,28 +9,27 @@ from .instruction import Instruction
 from .names import check_name
 
 
-@dataclass
 class Accelerator:
     name: str
     data_model: List[DataModel]
     state: List[State]
-    instructions: List[Instruction] = field(init=False)
-    base_dir: str = field(init=False)
+    instructions: List[Instruction]
+    base_dir: str
 
-    def __init__(self, name: str, base_dir: str = None):
+    def __init__(self, name: str, base_dir: str | None = None):
         check_name('accelerator', name)
         self.name = name
         self.instructions = []
         self.state = []
         self.data_model = []
-        if base_dir is not None:
-            self.base_dir = base_dir
-        else:
-            caller_file = inspect.stack()[1].filename
+        if base_dir is None:
+            # The directory of the file that creates the accelerator
+            caller_file = inspect.currentframe().f_back.f_code.co_filename
             if os.path.exists(caller_file):
-                self.base_dir = os.path.dirname(os.path.abspath(caller_file))
+                base_dir = os.path.dirname(os.path.abspath(caller_file))
             else:
-                self.base_dir = os.getcwd()
+                base_dir = os.getcwd()
+        self.base_dir = base_dir
         self.add_data_model('d0', [], [], 'u8')
 
     def add_data_model(
