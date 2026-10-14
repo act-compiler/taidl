@@ -45,6 +45,22 @@ class TestComments:
         assert tree.instruction(1).result_type().shape().getText() == '`@c.n // 2`'
 
 
+class TestRoot:
+    @pytest.mark.parametrize(
+        'lines, found',
+        [
+            (['%Out0 = f32[4] copy(%In1);'], 0),
+            (['ROOT %a = f32[4] copy(%In1);', 'ROOT %Out0 = f32[4] copy(%a);'], 2),
+        ],
+        ids=['none', 'two'],
+    )
+    def test_root_count_fails(self, lines, found):
+        with pytest.raises(
+            SyntaxError, match=f't: semantics needs exactly one ROOT, found {found}'
+        ):
+            parse(spec(*lines))
+
+
 # The operation words by family
 FAMILIES = {
     'inputs and constants': 'parameter constant iota',
