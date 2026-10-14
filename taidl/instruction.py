@@ -88,13 +88,11 @@ class Instruction:
     def find_data_model(self, name: str) -> DataModel:
         for model in self.data_models:
             if model.var_name == name:
-                break
-        else:
-            model = None
-        assert model != None, f"Data buffer '{name}' not found"
-        return model
+                return model
+        raise ValueError(f"{self.instruction}: no data model is named '{name}'")
 
     def set_inputs(self, inputs: List[Tuple[str, List[str], List[str]]]):
+        self.check_regions(inputs)
         trees = self.parse_regions(inputs)
         if self.instr_semantics_ast is not None:
             self.check_values(self.instr_semantics_ast, 'input', inputs)
@@ -103,11 +101,17 @@ class Instruction:
         self.inputs_given = True
 
     def set_outputs(self, outputs: List[Tuple[str, List[str], List[str]]]):
+        self.check_regions(outputs)
         trees = self.parse_regions(outputs)
         if self.instr_semantics_ast is not None:
             self.check_values(self.instr_semantics_ast, 'output', outputs)
         self.instr_outputs, self.instr_output_asts = list(outputs), trees
         self.outputs_given = True
+
+    def check_regions(self, regions: Sequence[Region]):
+        """Refuse a buffer the accelerator does not declare."""
+        for buffer, _, _ in regions:
+            self.find_data_model(buffer)
 
     def parse_regions(self, regions: Sequence[Region]) -> list[RegionTrees]:
         """Parse each start and size of each region, an integer by its decimal text."""
