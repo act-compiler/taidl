@@ -112,9 +112,20 @@ class Instruction:
         self.outputs_given = True
 
     def check_regions(self, regions: Sequence[Region]):
-        """Refuse a buffer the accelerator does not declare."""
-        for buffer, _, _ in regions:
-            self.find_data_model(buffer)
+        """Refuse a region that is not [buffer, starts, sizes] of a declared buffer."""
+        for region in regions:
+            if not isinstance(region, (list, tuple)) or len(region) != 3:
+                raise ValueError(f'{self.instruction}: a region is [buffer, starts, sizes]')
+            buffer, starts, sizes = region
+            model = self.find_data_model(buffer)
+            # d0 is addressed in one dimension, in bytes
+            count = 1 if buffer == 'd0' else len(model.access_dim)
+            for extents in (starts, sizes):
+                if not isinstance(extents, (list, tuple)) or len(extents) != count:
+                    raise ValueError(
+                        f'{self.instruction}: a region of {buffer} '
+                        f'takes starts and sizes of length {count}'
+                    )
 
     def parse_regions(self, regions: Sequence[Region]) -> list[RegionTrees]:
         """Parse each start and size of each region, an integer by its decimal text."""

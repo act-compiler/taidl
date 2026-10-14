@@ -137,6 +137,63 @@ class TestBuffers:
             getattr(instr, setter)([['d9', ['@a.x'], ['1']]])
 
 
+@pytest.mark.parametrize('setter', ['set_inputs', 'set_outputs'])
+class TestRegions:
+    def region(self, setter, *regions):
+        acc = make()
+        acc.add_data_model('d2', [8, 8], [16], 's8')
+        acc.add_data_model('reg', [], [16], 's8')
+        instr = acc.add_instruction('t', [], ['x', 'y'])
+        getattr(instr, setter)(list(regions))
+        return instr
+
+    def test_one_start_and_size_per_addressed_dimension(self, setter):
+        self.region(
+            setter,
+            ['d0', ['@a.x'], ['16']],
+            ['d1', ['@a.x'], [1]],
+            ['d2', ['@a.x', 0], [1, 8]],
+            ['reg', [], []],
+        )
+
+    @pytest.mark.parametrize(
+        'region, buffer, count',
+        [
+            (['d2', ['@a.x'], ['1']], 'd2', 2),
+            (['d2', ['@a.x', '@a.y'], ['1']], 'd2', 2),
+            (['d1', ['@a.x', '@a.x'], ['1']], 'd1', 1),
+            (['d1', '@a.x', ['1']], 'd1', 1),
+            (['d1', 0, ['1']], 'd1', 1),
+            (['d0', ['@a.x', '0'], ['1', '1']], 'd0', 1),
+            (['d0', [], []], 'd0', 1),
+            (['reg', ['@a.x'], ['1']], 'reg', 0),
+        ],
+        ids=[
+            'few',
+            'few_sizes',
+            'many',
+            'bare_string',
+            'bare_integer',
+            'd0_many',
+            'd0_none',
+            'unaddressed',
+        ],
+    )
+    def test_count_refused(self, setter, region, buffer, count):
+        message = f't: a region of {buffer} takes starts and sizes of length {count}'
+        with pytest.raises(ValueError, match=message):
+            self.region(setter, region)
+
+    @pytest.mark.parametrize(
+        'regions',
+        [[['d1', ['@a.x']]], [['d1', ['@a.x'], ['1'], ['1']]], ['d1', ['@a.x'], ['1']], [5]],
+        ids=['two_parts', 'four_parts', 'no_outer_list', 'no_list'],
+    )
+    def test_shape_refused(self, setter, regions):
+        with pytest.raises(ValueError, match=r't: a region is \[buffer, starts, sizes\]'):
+            self.region(setter, *regions)
+
+
 class TestInplace:
     def test_unmarked_by_default(self):
         assert two_inputs().inplace == [False, False]
