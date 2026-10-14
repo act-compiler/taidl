@@ -65,6 +65,74 @@ class TestInplace:
             make().add_instruction('t', [], ['x']).set_inplace([True])
 
 
+class KeepOff:
+    """The checks every non-overlap mark shares."""
+
+    def mark(self, instr, flags):
+        getattr(instr, self.method)(flags)
+
+    @pytest.mark.parametrize('found', [0, 2])
+    def test_needs_one_output(self, found):
+        instr = make().add_instruction('t', [], ['x', 'o'])
+        instr.set_inputs([['d1', ['@a.x'], ['1']]])
+        instr.set_outputs([['d1', ['@a.o'], ['1']]] * found)
+        message = f't: {self.method} needs exactly one output, found {found}'
+        with pytest.raises(ValueError, match=message):
+            self.mark(instr, [True])
+
+    def test_one_flag_per_input(self):
+        with pytest.raises(ValueError, match=f't: {self.method} needs one flag per input'):
+            self.mark(two_inputs(), [True])
+
+    def test_not_also_inplace(self):
+        instr = two_inputs()
+        instr.set_inplace([False, True])
+        with pytest.raises(ValueError, match=f't: {self.method} marks an input also in place'):
+            self.mark(instr, [False, True])
+
+    def test_same_buffer(self):
+        instr = make().add_instruction('t', [], ['x', 'o'])
+        instr.set_inputs([['d0', ['@a.x'], ['1']]])
+        instr.set_outputs([['d1', ['@a.o'], ['1']]])
+        with pytest.raises(ValueError, match=f't: {self.method} marks an input outside d1'):
+            self.mark(instr, [True])
+
+
+class TestApart(KeepOff):
+    method = 'set_apart'
+
+    def test_constraint(self):
+        instr = two_inputs()
+        instr.set_apart([False, True])
+        assert instr.constraints == ['@a.o + @c.n <= (@a.y + 1) or (@a.y + 1) + 1 <= @a.o']
+
+    def test_any_addressed_dimension(self):
+        acc = make()
+        acc.add_data_model('d2', [8, 8], [16], 's8')
+        instr = acc.add_instruction('t', [], ['q', 'r', 'x', 'o'], constraints=['@a.q >= 0'])
+        instr.set_inputs([['d2', ['@a.r', '@a.x'], ['2', '4']]])
+        instr.set_outputs([['d2', ['@a.q', '@a.o'], ['2', '4']]])
+        instr.set_apart([True])
+        apart = '@a.q + 2 <= @a.r or @a.r + 2 <= @a.q or @a.o + 4 <= @a.x or @a.x + 4 <= @a.o'
+        assert instr.constraints == ['@a.q >= 0', apart]
+
+    def test_only_where_starts_differ(self):
+        acc = make()
+        acc.add_data_model('d2', [8, 8], [16], 's8')
+        instr = acc.add_instruction('t', ['n'], ['r', 'x', 'o'])
+        instr.set_inputs([['d2', ['@a.r', '@a.x'], ['@c.n', '4']]])
+        instr.set_outputs([['d2', ['@a.r', '@a.o'], ['1', '4']]])
+        instr.set_apart([True])
+        assert instr.constraints == ['@a.o + 4 <= @a.x or @a.x + 4 <= @a.o']
+
+    def test_same_starts_refused(self):
+        instr = make().add_instruction('t', ['n'], ['x'])
+        instr.set_inputs([['d1', ['@a.x'], ['@c.n']]])
+        instr.set_outputs([['d1', ['@a.x'], ['1']]])
+        with pytest.raises(ValueError, match="t: set_apart marks an input at the output's own"):
+            instr.set_apart([True])
+
+
 # t's semantics over the given parameters, %Out0 copying %In0
 def semantics(*parameters):
     lines = [f'%In{k} = s8[1,16] parameter({k});' for k in parameters]

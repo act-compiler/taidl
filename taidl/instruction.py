@@ -117,6 +117,41 @@ class Instruction:
             raise ValueError(f'{self.instruction}: set_inplace needs one flag per input')
         self.inplace = inplace
 
+    def set_apart(self, apart: List[bool]):
+        """Mark the inputs the output never overlaps, one flag per input.
+
+        Each marked input adds one constraint: the output lies apart from it along
+        at least one addressed dimension whose starts are spelled differently.
+        """
+        self.keep_off('set_apart', apart)
+
+    def keep_off(self, method: str, flags: List[bool]):
+        """Keep the output apart from each flagged input."""
+        name = self.instruction
+        if len(self.instr_outputs) != 1:
+            found = len(self.instr_outputs)
+            raise ValueError(f'{name}: {method} needs exactly one output, found {found}')
+        if len(flags) != len(self.instr_inputs):
+            raise ValueError(f'{name}: {method} needs one flag per input')
+        out_buffer, out_starts, out_sizes = self.instr_outputs[0]
+        for flag, inplace, (buffer, starts, sizes) in zip(flags, self.inplace, self.instr_inputs):
+            if not flag:
+                continue
+            if inplace:
+                raise ValueError(f'{name}: {method} marks an input also in place')
+            if buffer != out_buffer:
+                raise ValueError(f'{name}: {method} marks an input outside {out_buffer}')
+            # Per dim, unlike starts: one ends before the other
+            sides = []
+            for out_start, out_size, start, size in zip(out_starts, out_sizes, starts, sizes):
+                if str(out_start).strip() == str(start).strip():
+                    continue
+                sides.append(f'{term(out_start)} + {term(out_size)} <= {term(start)}')
+                sides.append(f'{term(start)} + {term(size)} <= {term(out_start)}')
+            if not sides:
+                raise ValueError(f"{name}: {method} marks an input at the output's own starts")
+            self.constraints = self.constraints + [' or '.join(sides)]
+
     def add_semantics(self, semantics: str):
         self.instr_semantics_str = semantics
         tree = self.parse_semantics(semantics)
@@ -195,3 +230,9 @@ class Instruction:
     def add_constraints(self, constraints: str):
         lines = constraints.strip().split('\n')
         self.constraints = self.constraints + [line for line in lines if line.strip()]
+
+
+def term(expr) -> str:
+    """One start or size as a constraint term, bracketed unless a single token."""
+    text = str(expr).strip()
+    return text if re.fullmatch(r'@?[\w.]+', text) else f'({text})'
