@@ -64,7 +64,7 @@ class TestQKV:
         assert len(gemm.instr_inputs) == 2
         assert len(gemm.instr_outputs) == 1
 
-    def test_softmax_is_inplace(self):
+    def test_softmax_reads_and_writes_d2(self):
         softmax = next(i for i in qkv.instructions if i.instruction == 'softmax')
         assert softmax.instr_inputs[0][0] == 'd2'
         assert softmax.instr_outputs[0][0] == 'd2'

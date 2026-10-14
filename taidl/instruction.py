@@ -35,6 +35,7 @@ class Instruction:
     instr_outputs: List[Tuple[str, List[str], List[str]]]
     instr_semantics_str: str
     instr_semantics_ast: Optional[IDLV2Parser.ModuleContext]
+    inplace: List[bool]
     inputs_given: bool
     outputs_given: bool
 
@@ -59,6 +60,7 @@ class Instruction:
         self.instr_outputs = []
         self.instr_semantics_str = ''
         self.instr_semantics_ast = None
+        self.inplace = []
         # Which of set_inputs and set_outputs has run
         self.inputs_given = False
         self.outputs_given = False
@@ -76,6 +78,7 @@ class Instruction:
         if self.instr_semantics_ast is not None:
             self.check_values(self.instr_semantics_ast, 'input', inputs)
         self.instr_inputs = inputs
+        self.inplace = [False] * len(inputs)
         self.inputs_given = True
 
     def set_outputs(self, outputs: List[Tuple[str, List[str], List[str]]]):
@@ -107,6 +110,12 @@ class Instruction:
                     f'{self.instruction}: semantics line {value.line}, column {value.column + 1}: '
                     f"'{value.text}' has no {kind} region, set_{kind}s gave {len(regions)}"
                 )
+
+    def set_inplace(self, inplace: List[bool]):
+        """Mark the inputs this instruction overwrites, one flag per input; set_inputs resets them."""
+        if len(inplace) != len(self.instr_inputs):
+            raise ValueError(f'{self.instruction}: set_inplace needs one flag per input')
+        self.inplace = inplace
 
     def add_semantics(self, semantics: str):
         self.instr_semantics_str = semantics
