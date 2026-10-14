@@ -50,11 +50,11 @@ class Instruction:
         data_models: List[DataModel],
     ):
         self.instruction = instruction.replace(' ', '_')
-        self.comp_attr = comp_attr
-        self.parameters = addr_attr
-        self.constraints = list(constraints)
+        self.comp_attr = strings(instruction, 'computation_attr', comp_attr)
+        self.parameters = strings(instruction, 'addressing_attr', addr_attr)
+        self.constraints = strings(instruction, 'constraints', constraints)
         self.cost = cost
-        self.update = list(update)
+        self.update = strings(instruction, 'update', update)
         self.data_models = data_models
         self.instr_inputs = []
         self.instr_outputs = []
@@ -241,9 +241,18 @@ class Instruction:
             )
         return tree
 
-    def add_constraints(self, constraints: str):
-        lines = constraints.strip().split('\n')
-        self.constraints = self.constraints + [line for line in lines if line.strip()]
+    def add_constraints(self, constraints: Sequence[str]):
+        """Append constraints to those the instruction already has."""
+        self.constraints = self.constraints + strings(
+            self.instruction, 'add_constraints', constraints
+        )
+
+
+def strings(instruction: str, what: str, given: Sequence[str]) -> List[str]:
+    """A copy of a list of strings; one bare string is refused."""
+    if isinstance(given, str):
+        raise TypeError(f'{instruction}: {what} takes a list of strings, not one string')
+    return list(given)
 
 
 def term(expr) -> str:
