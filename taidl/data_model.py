@@ -45,9 +45,10 @@ class DataModel:
 
     def __init__(self, var_name: str, access_dim: List[int], unit_dim: List[int], var_type: str):
         self.var_name = var_name
-        self.var_dim = access_dim + unit_dim
-        self.access_dim = access_dim
-        self.unit_dim = unit_dim
+        # Lists of its own, whatever sequence it is given
+        self.access_dim = list(access_dim)
+        self.unit_dim = list(unit_dim)
+        self.var_dim = self.access_dim + self.unit_dim
         self.var_type = var_type
         self.array_dim_str = self.create_arr_str(self.var_dim)
         self.num_dim_str = self.create_num_str()

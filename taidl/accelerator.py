@@ -38,6 +38,11 @@ class Accelerator:
         self, name: str, dimensions: List[int], unit_dim: List[int], var_type: str
     ) -> None:
         check_name('data model', name, taken=[model.var_name for model in self.data_model])
+        for what, dims in (('dimensions', dimensions), ('unit_dim', unit_dim)):
+            if not isinstance(dims, (list, tuple)) or any(
+                type(dim) is not int or dim < 1 for dim in dims
+            ):
+                raise ValueError(f'{name}: {what} {dims!r} is not a list of positive integers')
         if var_type not in TYPES:
             raise ValueError(f"{name}: type '{var_type}' is not one of {', '.join(TYPES)}")
         self.data_model.append(DataModel(name, dimensions, unit_dim, var_type))
@@ -51,6 +56,8 @@ class Accelerator:
                 'state is declared with the data models, before the instructions'
             )
         check_name('state', name, taken=[state.name for state in self.state])
+        if type(value) is not int:
+            raise ValueError(f"state '{name}': value {value!r} is not an integer")
         self.state.append(State(name, value))
 
     def add_instruction(

@@ -355,6 +355,17 @@ class TestInitialState:
             ('fifo_occupancy', 2),
         ]
 
+    def test_negative_value_accepted(self):
+        acc = make()
+        acc.add_initial_state('rs1', -1)
+        assert acc.state == [State('rs1', -1)]
+
+    @pytest.mark.parametrize('value', ['three', 0.5, None, True])
+    def test_value_not_an_integer_refused(self, value):
+        message = f"state 'mode': value {value!r} is not an integer"
+        with pytest.raises(ValueError, match=message):
+            make().add_initial_state('mode', value)
+
     def test_update_kept(self):
         acc = make()
         acc.add_initial_state('busy', 0)
