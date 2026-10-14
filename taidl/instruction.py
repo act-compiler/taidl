@@ -24,6 +24,8 @@ class Instruction:
     instr_outputs: List[Tuple[str, List[str], List[str]]]
     instr_semantics_str: str
     instr_semantics_ast: Optional[IDLV2Parser.ModuleContext]
+    inputs_given: bool
+    outputs_given: bool
 
     def __init__(
         self,
@@ -46,6 +48,9 @@ class Instruction:
         self.instr_outputs = []
         self.instr_semantics_str = ''
         self.instr_semantics_ast = None
+        # Which of set_inputs and set_outputs has run
+        self.inputs_given = False
+        self.outputs_given = False
 
     def find_data_model(self, name: str) -> DataModel:
         for model in self.data_models:
@@ -57,16 +62,52 @@ class Instruction:
         return model
 
     def set_inputs(self, inputs: List[Tuple[str, List[str], List[str]]]):
+        if self.instr_semantics_ast is not None:
+            self.check_values(self.instr_semantics_ast, 'input', inputs)
         self.instr_inputs = inputs
+        self.inputs_given = True
 
     def set_outputs(self, outputs: List[Tuple[str, List[str], List[str]]]):
+        if self.instr_semantics_ast is not None:
+            self.check_values(self.instr_semantics_ast, 'output', outputs)
         self.instr_outputs = outputs
+        self.outputs_given = True
+
+    def check_values(
+        self,
+        semantics: IDLV2Parser.ModuleContext,
+        kind: str,
+        regions: List[Tuple[str, List[str], List[str]]],
+    ):
+        """Refuse an input or output region without its value, or a value without its region."""
+        # Input region k has %In<k>, output region k %Out<k>
+        prefix = '%In' if kind == 'input' else '%Out'
+        expected = [f'{prefix}{k}' for k in range(len(regions))]
+        values = [line.IDENTIFIER().getSymbol() for line in semantics.instruction()]
+        values = [value for value in values if re.fullmatch(rf'{prefix}\d+', value.text)]
+        for k, name in enumerate(expected):
+            if name not in [value.text for value in values]:
+                raise SyntaxError(
+                    f"{self.instruction}: semantics has no '{name}' for {kind} region {k}"
+                )
+        for value in values:
+            if value.text not in expected:
+                raise SyntaxError(
+                    f'{self.instruction}: semantics line {value.line}, column {value.column + 1}: '
+                    f"'{value.text}' has no {kind} region, set_{kind}s gave {len(regions)}"
+                )
 
     def add_semantics(self, semantics: str):
         self.instr_semantics_str = semantics
         self.instr_semantics_ast = None
         if semantics and semantics.strip():
-            self.instr_semantics_ast = self.parse_semantics(semantics)
+            tree = self.parse_semantics(semantics)
+            # Against the regions given so far, even none
+            if self.inputs_given:
+                self.check_values(tree, 'input', self.instr_inputs)
+            if self.outputs_given:
+                self.check_values(tree, 'output', self.instr_outputs)
+            self.instr_semantics_ast = tree
 
     def parse_semantics(self, semantics: str):
         """Parse semantics into AST eagerly to catch syntax errors early"""
@@ -107,6 +148,17 @@ class Instruction:
                     f'{self.instruction}: semantics line {name.line}, column {name.column + 1}: '
                     f"'{name.text}' is declared by parameter({name.text[3:]}), not by {operation}"
                 )
+        # ROOT is on the last output, the highest %Out<k>
+        outputs = [line.IDENTIFIER().getText() for line in tree.instruction()]
+        outputs = [name for name in outputs if re.fullmatch(r'%Out\d+', name)]
+        last = max(outputs, key=lambda name: int(name[4:]), default='%Out0')
+        root = next(line for line in tree.instruction() if line.ROOT())
+        mark = root.ROOT().getSymbol()
+        if root.IDENTIFIER().getText() != last:
+            raise SyntaxError(
+                f'{self.instruction}: semantics line {mark.line}, column {mark.column + 1}: '
+                f"ROOT is on '{root.IDENTIFIER().getText()}', not on the last output '{last}'"
+            )
         return tree
 
     def add_constraints(self, constraints: str):
