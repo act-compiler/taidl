@@ -125,9 +125,11 @@ class TestComments:
         tree = parse(text)
         assert [line.OPERATION().getText() for line in tree.instruction()] == ['parameter', 'copy']
 
-    def test_floor_division_stays_in_an_expression(self):
-        tree = parse(spec('ROOT %Out0 = f32[`@c.n // 2`] copy(%In0);'))
-        assert tree.instruction(1).result_type().shape().getText() == '`@c.n // 2`'
+    def test_double_slash_in_an_expression_is_no_comment(self):
+        # The expression grammar refuses the second slash
+        message = "t: semantics line 3, column 29: extraneous input '/' expecting"
+        with pytest.raises(SyntaxError, match=re.escape(message)):
+            parse(spec('ROOT %Out0 = f32[`@c.n // 2`] copy(%In0);'))
 
 
 class TestValueNames:
