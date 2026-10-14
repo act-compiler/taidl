@@ -133,6 +133,31 @@ class TestApart(KeepOff):
             instr.set_apart([True])
 
 
+class TestNoPartialOverlap(KeepOff):
+    method = 'set_no_partial_overlap'
+
+    def test_same_start_or_apart(self):
+        instr = two_inputs()
+        instr.set_no_partial_overlap([True, False])
+        assert instr.constraints == ['@a.o == @a.x or @a.o + @c.n <= @a.x or @a.x + @c.n <= @a.o']
+
+    def test_only_where_starts_differ(self):
+        acc = make()
+        acc.add_data_model('d2', [8, 8], [16], 's8')
+        instr = acc.add_instruction('t', ['n'], ['r', 'x', 'o'])
+        instr.set_inputs([['d2', ['@a.r', '@a.x'], ['@c.n', '4']]])
+        instr.set_outputs([['d2', ['@a.r', '@a.o'], ['1', '4']]])
+        instr.set_no_partial_overlap([True])
+        assert instr.constraints == ['@a.o == @a.x or @a.o + 4 <= @a.x or @a.x + 4 <= @a.o']
+
+    def test_same_starts_add_nothing(self):
+        instr = make().add_instruction('t', ['n'], ['x'])
+        instr.set_inputs([['d1', ['@a.x'], ['@c.n']]])
+        instr.set_outputs([['d1', ['@a.x'], ['1']]])
+        instr.set_no_partial_overlap([True])
+        assert instr.constraints == []
+
+
 # t's semantics over the given parameters, %Out0 copying %In0
 def semantics(*parameters):
     lines = [f'%In{k} = s8[1,16] parameter({k});' for k in parameters]
