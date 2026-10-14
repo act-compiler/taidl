@@ -90,7 +90,7 @@ ENTRY {
 # (7) softmax: Applies softmax along dimension 1 (rows) on d2
 instr = mini_trn.add_instruction('softmax', ['n'], ['addr'])
 instr.set_inputs([['d2', ['@a.addr'], ['@c.n']]])
-instr.set_outputs([['d2', ['@a.addr'], ['@c.n']]])  # In-place operation
+instr.set_outputs([['d2', ['@a.addr'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.add_semantics("""
 ENTRY {
     %In0 = bf16[`@c.n`,64] parameter(0);
