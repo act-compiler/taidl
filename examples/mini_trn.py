@@ -14,7 +14,7 @@ mini_trn.add_data_model('d2', [64], [64], 'bf16')
 
 # Define Instruction semantics
 
-# (1) load_rm: Loads data from HBM (d0) in row-major format to d1
+# (1) load_rm: Loads d1 from HBM (d0) in row-major format
 instr = mini_trn.add_instruction('load_rm', ['n'], ['addr_in', 'addr_out'])
 instr.set_inputs([['d0', ['@a.addr_in'], ['@c.n * 128']]])  # u8[@c.n * 128]
 instr.set_outputs([['d1', ['@a.addr_out'], ['@c.n']]])  # bf16[@c.n, 64]
@@ -26,7 +26,7 @@ ENTRY {
 }
 """)
 
-# (2) load_cm: Loads data from HBM (d0) in column-major format to d1 (with transpose)
+# (2) load_cm: Loads d1 from HBM (d0) in column-major format
 instr = mini_trn.add_instruction('load_cm', ['n'], ['addr_in', 'addr_out'])
 instr.set_inputs([['d0', ['@a.addr_in'], ['@c.n * 128']]])  # u8[@c.n * 128]
 instr.set_outputs([['d1', ['@a.addr_out'], ['@c.n']]])  # bf16[@c.n, 64]
@@ -39,7 +39,7 @@ ENTRY {
 }
 """)
 
-# (3) store_rm: Stores data from d1 to HBM (d0) in row-major format
+# (3) store_rm: Stores d1 to HBM (d0) in row-major format
 instr = mini_trn.add_instruction('store_rm', ['n'], ['addr_in', 'addr_out'])
 instr.set_inputs([['d1', ['@a.addr_in'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.set_outputs([['d0', ['@a.addr_out'], ['@c.n * 128']]])  # u8[@c.n * 128]
@@ -51,7 +51,7 @@ ENTRY {
 }
 """)
 
-# (4) store_cm: Stores data from d1 to HBM (d0) in column-major format (with transpose)
+# (4) store_cm: Stores d1 to HBM (d0) in column-major format
 instr = mini_trn.add_instruction('store_cm', ['n'], ['addr_in', 'addr_out'])
 instr.set_inputs([['d1', ['@a.addr_in'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.set_outputs([['d0', ['@a.addr_out'], ['@c.n * 128']]])  # u8[@c.n * 128]
@@ -75,7 +75,7 @@ ENTRY {
 }
 """)
 
-# (6) gemm: Matrix multiplication between two d1 tensors, output to d2
+# (6) gemm: Multiplies two d1 tensors, output to d2
 instr = mini_trn.add_instruction('gemm', [], ['addr_1', 'addr_2', 'addr_out'])
 instr.set_inputs([['d1', ['@a.addr_1'], ['64']], ['d1', ['@a.addr_2'], ['64']]])
 instr.set_outputs([['d2', ['@a.addr_out'], ['64']]])  # bf16[64, 64]
