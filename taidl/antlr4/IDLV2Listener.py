@@ -107,6 +107,15 @@ class IDLV2Listener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by IDLV2Parser#dim.
+    def enterDim(self, ctx:IDLV2Parser.DimContext):
+        pass
+
+    # Exit a parse tree produced by IDLV2Parser#dim.
+    def exitDim(self, ctx:IDLV2Parser.DimContext):
+        pass
+
+
     # Enter a parse tree produced by IDLV2Parser#value.
     def enterValue(self, ctx:IDLV2Parser.ValueContext):
         pass

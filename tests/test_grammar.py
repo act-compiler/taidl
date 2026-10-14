@@ -81,6 +81,19 @@ class TestStrict:
         # The error is raised, never printed
         assert capsys.readouterr() == ('', '')
 
+    @pytest.mark.parametrize(
+        'line',
+        [
+            'ROOT %Out0 = s32[] constant(@c.n);',
+            'ROOT %Out0 = f32[4] broadcast(%In0), dimensions={@c.n};',
+            'ROOT %Out0 = f32[4] copy(%In0), n=@s.mode;',
+        ],
+        ids=['operand', 'brace_list', 'attribute'],
+    )
+    def test_reference_outside_backticks_fails(self, line):
+        with pytest.raises(SyntaxError, match='t: semantics line 3, column .*@'):
+            parse(spec(line))
+
     def test_text_after_module_fails(self):
         with pytest.raises(SyntaxError):
             parse(spec('ROOT %Out0 = f32[4] copy(%In0);') + '}')
@@ -102,6 +115,17 @@ class TestComments:
     def test_floor_division_stays_in_an_expression(self):
         tree = parse(spec('ROOT %Out0 = f32[`@c.n // 2`] copy(%In0);'))
         assert tree.instruction(1).result_type().shape().getText() == '`@c.n // 2`'
+
+
+class TestValueNames:
+    def test_name_without_percent_fails(self):
+        message = "t: semantics line 3, column 10: value name 'Out0' has no leading '%'"
+        with pytest.raises(SyntaxError, match=message):
+            parse(spec('ROOT Out0 = f32[4] copy(%In0);'))
+
+    def test_bare_word_operand_parses(self):
+        tree = parse(spec('ROOT %Out0 = pred[] constant(true);'))
+        assert tree.instruction(1).operands().operand(0).value().IDENTIFIER().getText() == 'true'
 
 
 class TestRoot:
@@ -290,7 +314,17 @@ class TestShapes:
 
     def test_ranked_result(self):
         tree = parse(spec('ROOT %Out0 = f32[`@c.n`,4] broadcast(%In0), dimensions={1};'))
-        assert tree.instruction(1).result_type().shape().getText() == '`@c.n`,4'
+        shape = tree.instruction(1).result_type().shape()
+        assert [dim.getText() for dim in shape.dim()] == ['`@c.n`', '4']
+        assert (shape.dim(0).EXPRESSION().getText(), shape.dim(1).INT().getText()) == (
+            '`@c.n`',
+            '4',
+        )
+
+    @pytest.mark.parametrize('dim', ['-1', '0.5', '1e3', 'n', '%In0'])
+    def test_dimension_is_an_integer_or_an_expression(self, dim):
+        with pytest.raises(SyntaxError, match='t: semantics line 3, column 22'):
+            parse(spec(f'ROOT %Out0 = f32[{dim}] copy(%In0);'))
 
 
 class TestEntry:

@@ -1,6 +1,7 @@
 grammar IDLV2;
 
 // === Parser Rules ===
+// instruction.py checks what the grammar leaves unchecked
 
 module          : ENTRY LBRACE instruction+ RBRACE EOF ;
 
@@ -18,7 +19,8 @@ attribute_value : brace_list | slice_list | value ;
 brace_list      : LBRACE (value (COMMA value)*)? RBRACE ;
 slice_list      : LBRACE ( LBRACKET value COLON value (COLON value)? RBRACKET (COMMA LBRACKET value COLON value (COLON value)? RBRACKET)*)? RBRACE ;
 
-shape           : value (COMMA value)* ;
+shape           : dim (COMMA dim)* ;
+dim             : INT | EXPRESSION ;
 
 value           : INT | NUMBER | IDENTIFIER | EXPRESSION ;
 
@@ -88,7 +90,8 @@ INT        : [0-9]+ ;
 // Signed, fractional, exponent or non-finite; a bare integer stays INT
 NUMBER     : '-'? ([0-9]+ ('.' [0-9]+)? ([eE] [+-]? [0-9]+)? | 'inf' | 'nan') ;
 EXPRESSION : '`' (~'`')* '`' ;
-IDENTIFIER : '%'?[a-zA-Z_@][a-zA-Z0-9_.@]* ;
+// A value's name with its %, or a bare word
+IDENTIFIER : '%'? [a-zA-Z_] [a-zA-Z0-9_.]* ;
 // A comment runs to the end of its line
 COMMENT    : '//' ~[\r\n]* -> skip ;
 WS         : [ \t\r\n]+ -> skip ;

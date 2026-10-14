@@ -132,6 +132,14 @@ class Instruction:
         tree = parser.module()
         if errors.found:
             raise SyntaxError(f'{self.instruction}: semantics {errors.found[0]}')
+        # A line names its value with a leading %
+        for line in tree.instruction():
+            name = line.IDENTIFIER().getSymbol()
+            if not name.text.startswith('%'):
+                raise SyntaxError(
+                    f'{self.instruction}: semantics line {name.line}, column {name.column + 1}: '
+                    f"value name '{name.text}' has no leading '%'"
+                )
         # One line carries ROOT
         roots = sum(line.ROOT() is not None for line in tree.instruction())
         if roots != 1:
