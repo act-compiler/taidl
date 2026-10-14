@@ -1,5 +1,3 @@
-"""Main Accelerator class for TAIDLv2"""
-
 import inspect
 import os
 from collections.abc import Sequence

@@ -16,7 +16,7 @@ mini_trn_double.add_data_model('d2', [64], [64], 'bf16')
 
 # Define Instruction semantics
 
-# (1) load_01: Loads data from HBM (d0) in row-major format to d1
+# (1) load_01: Loads d1 from HBM (d0) in row-major format
 instr = mini_trn_double.add_instruction('load_01', ['n'], ['addr_in', 'addr_out'])
 instr.set_inputs([['d0', ['@a.addr_in'], ['@c.n * 128']]])  # u8[@c.n * 128]
 instr.set_outputs([['d1', ['@a.addr_out'], ['@c.n']]])  # bf16[@c.n, 64]
@@ -29,7 +29,7 @@ ENTRY {
 """)
 
 
-# (2) load_03: Loads data from HBM (d0) in row-major format to d3
+# (2) load_03: Loads d3 from HBM (d0) in row-major format
 instr = mini_trn_double.add_instruction('load_03', ['n'], ['addr_in', 'addr_out'])
 instr.set_inputs([['d0', ['@a.addr_in'], ['@c.n * 128']]])  # u8[@c.n * 128]
 instr.set_outputs([['d3', ['@a.addr_out'], ['@c.n']]])  # bf16[@c.n, 64]
@@ -42,7 +42,7 @@ ENTRY {
 """)
 
 
-# (3) store_10: Stores data from d1 to HBM (d0) in row-major format
+# (3) store_10: Stores d1 to HBM (d0) in row-major format
 instr = mini_trn_double.add_instruction('store_10', ['n'], ['addr_in', 'addr_out'])
 instr.set_inputs([['d1', ['@a.addr_in'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.set_outputs([['d0', ['@a.addr_out'], ['@c.n * 128']]])  # u8[@c.n * 128]
@@ -54,7 +54,7 @@ ENTRY {
 }
 """)
 
-# (4) store_30: Stores data from d3 to HBM (d0) in row-major format
+# (4) store_30: Stores d3 to HBM (d0) in row-major format
 instr = mini_trn_double.add_instruction('store_30', ['n'], ['addr_in', 'addr_out'])
 instr.set_inputs([['d3', ['@a.addr_in'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.set_outputs([['d0', ['@a.addr_out'], ['@c.n * 128']]])  # u8[@c.n * 128]
@@ -66,10 +66,10 @@ ENTRY {
 }
 """)
 
-# (5) transpose_13: Moves data from d1 to d3 in row-major format (with transpose)
+# (5) transpose_13: Moves 64 rows from d1 to d3, transposed
 instr = mini_trn_double.add_instruction('transpose_13', [], ['addr_in', 'addr_out'])
-instr.set_inputs([['d1', ['@a.addr_in'], ['64']]])  # bf16[@c.n, 64]
-instr.set_outputs([['d3', ['@a.addr_out'], ['64']]])  # bf16[64, @c.n]
+instr.set_inputs([['d1', ['@a.addr_in'], ['64']]])  # bf16[64, 64]
+instr.set_outputs([['d3', ['@a.addr_out'], ['64']]])  # bf16[64, 64]
 instr.add_semantics("""
 ENTRY {
     %In0 = bf16[64,64] parameter(0);
@@ -92,7 +92,7 @@ ENTRY {
 # (7) mov_23: Copies data from d2 to d3
 instr = mini_trn_double.add_instruction('mov_23', ['n'], ['addr_in', 'addr_out'])
 instr.set_inputs([['d2', ['@a.addr_in'], ['@c.n']]])  # bf16[@c.n, 64]
-instr.set_outputs([['d3', ['@a.addr_out'], ['@c.n']]])  # bf16[@c.n, 64] (ignore last 64 columns)
+instr.set_outputs([['d3', ['@a.addr_out'], ['@c.n']]])  # bf16[@c.n, 64]
 instr.add_semantics("""
 ENTRY {
     %In0 = bf16[`@c.n`,64] parameter(0);
@@ -100,7 +100,7 @@ ENTRY {
 }
 """)
 
-# (8) gemm_33: Matrix multiplication between two d3 tensors, output to d2
+# (8) gemm_33: Multiplies two d3 tensors, output to d2
 instr = mini_trn_double.add_instruction('gemm_33', [], ['addr_1', 'addr_2', 'addr_out'])
 instr.set_inputs([['d3', ['@a.addr_1'], ['64']], ['d3', ['@a.addr_2'], ['64']]])
 instr.set_outputs([['d2', ['@a.addr_out'], ['64']]])  # bf16[64, 64]
@@ -112,7 +112,7 @@ ENTRY {
 }
 """)
 
-# (9) gemm_13: Matrix multiplication between one d1 tensor and one d3 tensor, output to d2
+# (9) gemm_13: Multiplies d1 by d3, output to d2
 instr = mini_trn_double.add_instruction('gemm_13', [], ['addr_1', 'addr_2', 'addr_out'])
 instr.set_inputs([['d1', ['@a.addr_1'], ['64']], ['d3', ['@a.addr_2'], ['64']]])
 instr.set_outputs([['d2', ['@a.addr_out'], ['64']]])  # bf16[64, 64]

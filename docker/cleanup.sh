@@ -17,7 +17,7 @@ else
   exit 1
 fi
 
-# collect candidate containers (all containers using the image)
+# Every container of the image
 mapfile -t CONTAINERS < <(docker ps -a --format '{{.ID}} {{.Names}} {{.Image}} {{.Status}}' | awk -v img="${IMAGE_NAME}" '$3 == img')
 
 NUM_CONTAINERS=${#CONTAINERS[@]}

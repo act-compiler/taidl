@@ -1,5 +1,3 @@
-"""Tests for the semantics grammar"""
-
 import os
 import re
 
