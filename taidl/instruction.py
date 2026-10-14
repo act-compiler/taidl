@@ -51,6 +51,10 @@ class Instruction:
     instr_output_asts: list[RegionTrees]
     instr_expression_asts: dict[TerminalNode, IDLV2ExprParser.ExpressionContext]
     inplace: List[bool]
+    # Each placement mark's flags, by its method's name
+    marks: dict[str, list[bool]]
+    # The trees of the constraints each placement mark appended
+    placed: dict[str, list[IDLV2ExprParser.ConditionContext]]
     inputs_given: bool
     outputs_given: bool
 
@@ -80,7 +84,7 @@ class Instruction:
         self.instr_inputs, self.instr_input_asts = [], []
         self.instr_outputs, self.instr_output_asts = [], []
         self.instr_semantics_ast, self.instr_expression_asts = None, {}
-        self.inplace = []
+        self.inplace, self.marks, self.placed = [], {}, {}
         # Which of set_inputs and set_outputs has run
         self.inputs_given = False
         self.outputs_given = False
@@ -98,6 +102,7 @@ class Instruction:
             self.check_values(self.instr_semantics_ast, 'input', inputs)
         self.instr_inputs, self.instr_input_asts = list(inputs), trees
         self.inplace = [False] * len(inputs)
+        self.drop_marks()
         self.inputs_given = True
 
     def set_outputs(self, outputs: Sequence[Region]):
@@ -106,6 +111,7 @@ class Instruction:
         if self.instr_semantics_ast is not None:
             self.check_values(self.instr_semantics_ast, 'output', outputs)
         self.instr_outputs, self.instr_output_asts = list(outputs), trees
+        self.drop_marks()
         self.outputs_given = True
 
     def check_regions(self, regions: Sequence[Region]):
@@ -160,6 +166,11 @@ class Instruction:
         """Mark the inputs this instruction overwrites, one flag per input; set_inputs resets them."""
         if len(inplace) != len(self.instr_inputs):
             raise ValueError(f'{self.instruction}: set_inplace needs one flag per input')
+        for method, flags in self.marks.items():
+            if any(flag and mark for flag, mark in zip(inplace, flags)):
+                raise ValueError(
+                    f'{self.instruction}: set_inplace marks an input also marked by {method}'
+                )
         self.inplace = list(inplace)
 
     def set_apart(self, apart: List[bool]):
@@ -187,7 +198,10 @@ class Instruction:
         if len(flags) != len(self.instr_inputs):
             raise ValueError(f'{name}: {method} needs one flag per input')
         out_buffer, out_starts, out_sizes = self.instr_outputs[0]
-        for flag, inplace, (buffer, starts, sizes) in zip(flags, self.inplace, self.instr_inputs):
+        out_trees = self.instr_output_asts[0][1]
+        written = []
+        inputs = zip(flags, self.inplace, self.instr_inputs, self.instr_input_asts)
+        for flag, inplace, (buffer, starts, sizes), (_, trees, _) in inputs:
             if not flag:
                 continue
             if inplace:
@@ -196,8 +210,10 @@ class Instruction:
                 raise ValueError(f'{name}: {method} marks an input outside {out_buffer}')
             # Per dim, unlike starts: one ends before the other
             equals, sides = [], []
-            for out_start, out_size, start, size in zip(out_starts, out_sizes, starts, sizes):
-                if str(out_start).strip() == str(start).strip():
+            dims = zip(out_starts, out_sizes, out_trees, starts, sizes, trees)
+            for out_start, out_size, out_tree, start, size, tree in dims:
+                # Starts alike as parsed, whatever their spacing
+                if out_tree.getText() == tree.getText():
                     continue
                 equals.append(f'{term(out_start)} == {term(start)}')
                 sides.append(f'{term(out_start)} + {term(out_size)} <= {term(start)}')
@@ -205,11 +221,29 @@ class Instruction:
             apart = ' or '.join(sides)
             if whole:
                 # Or wholly over it: equal starts in each such dim
-                self.append_constraints([f'{equal} or {apart}' for equal in equals])
+                written += [f'{equal} or {apart}' for equal in equals]
             elif sides:
-                self.append_constraints([apart])
+                written.append(apart)
             else:
                 raise ValueError(f"{name}: {method} marks an input at the output's own starts")
+        # Given again, a mark replaces what it appended before
+        self.drop_placed(method)
+        first = len(self.constraints)
+        self.append_constraints(written)
+        self.marks[method], self.placed[method] = list(flags), self.constraint_asts[first:]
+
+    def drop_marks(self):
+        """Drop every placement mark, the regions it was written from being replaced."""
+        for method in list(self.placed):
+            self.drop_placed(method)
+
+    def drop_placed(self, method: str):
+        """Drop a placement mark: its flags and the constraints it appended."""
+        self.marks.pop(method, None)
+        for tree in self.placed.pop(method, []):
+            position = self.constraint_asts.index(tree)
+            del self.constraints[position]
+            del self.constraint_asts[position]
 
     def add_semantics(self, semantics: str):
         tree = self.parse_semantics(semantics)

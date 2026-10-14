@@ -282,12 +282,64 @@ class KeepOff:
         with pytest.raises(ValueError, match=f't: {self.method} marks an input also in place'):
             self.mark(instr, [False, True])
 
+    def test_inplace_after_the_mark_refused(self):
+        instr = two_inputs()
+        self.mark(instr, [False, True])
+        message = f't: set_inplace marks an input also marked by {self.method}'
+        with pytest.raises(ValueError, match=message):
+            instr.set_inplace([False, True])
+        instr.set_inplace([True, False])
+        assert instr.inplace == [True, False]
+        # The mark withdrawn, its input may be in place
+        self.mark(instr, [False, False])
+        instr.set_inplace([False, True])
+
     def test_same_buffer(self):
         instr = make().add_instruction('t', [], ['x', 'o'])
         instr.set_inputs([['d0', ['@a.x'], ['1']]])
         instr.set_outputs([['d1', ['@a.o'], ['1']]])
         with pytest.raises(ValueError, match=f't: {self.method} marks an input outside d1'):
             self.mark(instr, [True])
+
+    @pytest.mark.parametrize('setter', ['set_inputs', 'set_outputs'])
+    def test_new_regions_drop_its_constraints(self, setter):
+        instr = two_inputs()
+        instr.add_constraints(['@a.x >= 0'])
+        self.mark(instr, [True, True])
+        instr.add_constraints(['@a.o >= 0'])
+        assert len(instr.constraints) == 4
+        getattr(instr, setter)([['d1', ['@a.y'], ['1']]])
+        assert instr.constraints == ['@a.x >= 0', '@a.o >= 0']
+        assert [tree.getText() for tree in instr.constraint_asts] == ['@a.x>=0', '@a.o>=0']
+        # The regions given again, the mark writes from them
+        instr.set_inputs([['d1', ['@a.x'], ['1']]])
+        instr.set_outputs([['d1', ['@a.o'], ['1']]])
+        self.mark(instr, [True])
+        assert len(instr.constraints) == 3
+        assert '@a.y' not in instr.constraints[2]
+
+    def test_given_again_replaces_its_constraints(self):
+        instr, once = two_inputs(), two_inputs()
+        instr.add_constraints(['@a.x >= 0'])
+        self.mark(instr, [True, True])
+        instr.add_constraints(['@a.o >= 0'])
+        self.mark(instr, [True, False])
+        self.mark(once, [True, False])
+        assert instr.constraints == ['@a.x >= 0', '@a.o >= 0'] + once.constraints
+        assert len(instr.constraint_asts) == len(instr.constraints)
+        self.mark(instr, [False, False])
+        assert instr.constraints == ['@a.x >= 0', '@a.o >= 0']
+
+    def test_refused_mark_changes_nothing(self):
+        instr = two_inputs()
+        instr.set_inplace([False, True])
+        with pytest.raises(ValueError, match=f't: {self.method} marks an input also in place'):
+            self.mark(instr, [True, True])
+        assert instr.constraints == []
+
+
+# An input's start and the output's, alike once parsed
+SAME_STARTS = [('@a.x', '@a.x'), ('@a.x+1', '@a.x + 1'), (0, '0')]
 
 
 class TestApart(KeepOff):
@@ -317,10 +369,11 @@ class TestApart(KeepOff):
         instr.set_apart([True])
         assert instr.constraints == ['@a.o + 4 <= @a.x or @a.x + 4 <= @a.o']
 
-    def test_same_starts_refused(self):
+    @pytest.mark.parametrize('start, out_start', SAME_STARTS)
+    def test_same_starts_refused(self, start, out_start):
         instr = make().add_instruction('t', ['n'], ['x'])
-        instr.set_inputs([['d1', ['@a.x'], ['@c.n']]])
-        instr.set_outputs([['d1', ['@a.x'], ['1']]])
+        instr.set_inputs([['d1', [start], ['@c.n']]])
+        instr.set_outputs([['d1', [out_start], ['1']]])
         with pytest.raises(ValueError, match="t: set_apart marks an input at the output's own"):
             instr.set_apart([True])
 
@@ -342,10 +395,11 @@ class TestNoPartialOverlap(KeepOff):
         instr.set_no_partial_overlap([True])
         assert instr.constraints == ['@a.o == @a.x or @a.o + 4 <= @a.x or @a.x + 4 <= @a.o']
 
-    def test_same_starts_add_nothing(self):
+    @pytest.mark.parametrize('start, out_start', SAME_STARTS)
+    def test_same_starts_add_nothing(self, start, out_start):
         instr = make().add_instruction('t', ['n'], ['x'])
-        instr.set_inputs([['d1', ['@a.x'], ['@c.n']]])
-        instr.set_outputs([['d1', ['@a.x'], ['1']]])
+        instr.set_inputs([['d1', [start], ['@c.n']]])
+        instr.set_outputs([['d1', [out_start], ['1']]])
         instr.set_no_partial_overlap([True])
         assert instr.constraints == []
 
