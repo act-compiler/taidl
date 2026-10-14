@@ -5,6 +5,7 @@ import re
 
 import pytest
 from antlr4 import InputStream
+
 import taidl.antlr4
 from taidl import Accelerator
 from taidl.antlr4 import IDLV2Lexer

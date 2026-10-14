@@ -8,6 +8,7 @@ import runpy
 import types
 
 import pytest
+
 from taidl import Accelerator, Instruction, State
 
 EXAMPLES_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'examples')

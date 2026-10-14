@@ -1,8 +1,8 @@
 """Main Accelerator class for TAIDLv2"""
 
-import os
 import inspect
-from typing import List, Sequence
+import os
+from collections.abc import Sequence
 
 from .data_model import TYPES, DataModel, State
 from .instruction import Instruction
@@ -11,9 +11,9 @@ from .names import check_name
 
 class Accelerator:
     name: str
-    data_model: List[DataModel]
-    state: List[State]
-    instructions: List[Instruction]
+    data_model: list[DataModel]
+    state: list[State]
+    instructions: list[Instruction]
     base_dir: str
 
     def __init__(self, name: str, base_dir: str | None = None):
@@ -33,7 +33,7 @@ class Accelerator:
         self.add_data_model('d0', [], [], 'u8')
 
     def add_data_model(
-        self, name: str, dimensions: List[int], unit_dim: List[int], var_type: str
+        self, name: str, dimensions: list[int], unit_dim: list[int], var_type: str
     ) -> None:
         check_name('data model', name, taken=[model.var_name for model in self.data_model])
         for what, dims in (('dimensions', dimensions), ('unit_dim', unit_dim)):
@@ -61,8 +61,8 @@ class Accelerator:
     def add_instruction(
         self,
         name: str,
-        computation_attr: List[str],
-        addressing_attr: List[str],
+        computation_attr: list[str],
+        addressing_attr: list[str],
         *,
         update: Sequence[str] = (),
         constraints: Sequence[str] = (),
