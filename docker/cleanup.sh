@@ -13,12 +13,32 @@ if [ "$ARCH" = "x86_64" ]; then
 elif [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then
   IMAGE_NAME="devanshdvj/act-env:${ACT_ENV_TAG}-arm64"
 else
-  echo "Error: Unsupported architecture: $ARCH"
+  echo "Error: Unsupported architecture: $ARCH" >&2
   exit 1
 fi
 
+usage() {
+  echo "Usage: $0 [-h|--help]"
+}
+
+# Any argument but --help is refused
+for arg in "$@"; do
+  case "$arg" in
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "Unknown argument: $arg" >&2
+      usage >&2
+      exit 1
+      ;;
+  esac
+done
+
 # Every container of the image
-mapfile -t CONTAINERS < <(docker ps -a --format '{{.ID}} {{.Names}} {{.Image}} {{.Status}}' | awk -v img="${IMAGE_NAME}" '$3 == img')
+LISTED=$(docker ps -a --format '{{.ID}} {{.Names}} {{.Image}} {{.Status}}')
+mapfile -t CONTAINERS < <(awk -v img="${IMAGE_NAME}" '$3 == img' <<<"${LISTED}")
 
 NUM_CONTAINERS=${#CONTAINERS[@]}
 if [ ${NUM_CONTAINERS} -eq 0 ]; then
