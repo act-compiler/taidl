@@ -13,7 +13,7 @@ if [ "$ARCH" = "x86_64" ]; then
 elif [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then
   IMAGE_NAME="devanshdvj/act-env:${ACT_ENV_TAG}-arm64"
 else
-  echo "Error: Unsupported architecture: $ARCH"
+  echo "Error: Unsupported architecture: $ARCH" >&2
   exit 1
 fi
 
@@ -54,8 +54,8 @@ while [ $# -gt 0 ]; do
       exit 0
       ;;
     *)
-      echo "Unknown arg: $1"
-      usage
+      echo "Unknown arg: $1" >&2
+      usage >&2
       exit 1
       ;;
   esac
@@ -107,7 +107,7 @@ attach_existing() {
 
 # Ensure image exists
 if ! docker image inspect "${IMAGE_NAME}" >/dev/null 2>&1; then
-  echo "Image ${IMAGE_NAME} not found locally. Pull it or build from act/docker/."
+  echo "Image ${IMAGE_NAME} not found locally. Pull it or build from act/docker/." >&2
   exit 1
 fi
 
@@ -140,12 +140,12 @@ EXISTING="$(list_persistent_all)"
 if [ -z "${EXISTING}" ]; then
   read -rp "No persistent containers found. Enter a name for the new persistent container (without suffix): " NAME_IN
   if [ -z "${NAME_IN}" ]; then
-    echo "No name provided. Aborting."
+    echo "No name provided. Aborting." >&2
     exit 1
   fi
   if [[ ! "$NAME_IN" =~ ^[a-zA-Z0-9][a-zA-Z0-9_.-]*$ ]]; then
-    echo "Invalid name: $NAME_IN. Aborting."
-    echo "Supported Format: [a-zA-Z0-9][a-zA-Z0-9_.-]*"
+    echo "Invalid name: $NAME_IN. Aborting." >&2
+    echo "Supported Format: [a-zA-Z0-9][a-zA-Z0-9_.-]*" >&2
     exit 1
   fi
   NAME="$(normalize_name "${NAME_IN}")"
@@ -178,29 +178,29 @@ case "$CHOICE" in
   0)
     read -rp "Enter a name for the new persistent container (without suffix): " NAME_IN
     if [ -z "${NAME_IN}" ]; then
-      echo "No name provided. Aborting."
+      echo "No name provided. Aborting." >&2
       exit 1
     fi
 
     if [[ ! "$NAME_IN" =~ ^[a-zA-Z0-9][a-zA-Z0-9_.-]*$ ]]; then
-      echo "Invalid name: $NAME_IN. Aborting."
-      echo "Supported Format: [a-zA-Z0-9][a-zA-Z0-9_.-]*"
+      echo "Invalid name: $NAME_IN. Aborting." >&2
+      echo "Supported Format: [a-zA-Z0-9][a-zA-Z0-9_.-]*" >&2
       exit 1
     fi
     NAME="$(normalize_name "${NAME_IN}")"
     if docker ps -a --format '{{.Names}}' | grep -xq "${NAME}"; then
-      echo "Container ${NAME} already exists. Aborting."
+      echo "Container ${NAME} already exists. Aborting." >&2
       exit 1
     fi
     create_persistent "${NAME}"
     ;;
   *)
     if ! [[ "$CHOICE" =~ ^[0-9]+$ ]]; then
-      echo "Invalid choice. Aborting."
+      echo "Invalid choice. Aborting." >&2
       exit 1
     fi
     if [ -z "${NAMES[$CHOICE]:-}" ]; then
-      echo "Invalid choice. Aborting."
+      echo "Invalid choice. Aborting." >&2
       exit 1
     fi
     SEL="${NAMES[$CHOICE]}"

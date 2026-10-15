@@ -10,7 +10,7 @@ if [ "$ARCH" = "x86_64" ]; then
 elif [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then
   IMAGE_NAME="devanshdvj/act-env:${ACT_ENV_TAG}-arm64"
 else
-  echo "Error: Unsupported architecture: $ARCH"
+  echo "Error: Unsupported architecture: $ARCH" >&2
   exit 1
 fi
 
