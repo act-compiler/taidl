@@ -32,5 +32,8 @@ jobs:
             cd docker && ./build.sh --env
           fi
 
+      - name: Check formatting and lint
+        run: ./docker/exec.sh "ruff format --check && ruff check && shfmt -d ."
+
       - name: Run tests
         run: ./tests/pytest.sh
