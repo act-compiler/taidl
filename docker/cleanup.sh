@@ -18,7 +18,8 @@ else
 fi
 
 # Every container of the image
-mapfile -t CONTAINERS < <(docker ps -a --format '{{.ID}} {{.Names}} {{.Image}} {{.Status}}' | awk -v img="${IMAGE_NAME}" '$3 == img')
+LISTED=$(docker ps -a --format '{{.ID}} {{.Names}} {{.Image}} {{.Status}}')
+mapfile -t CONTAINERS < <(awk -v img="${IMAGE_NAME}" '$3 == img' <<<"${LISTED}")
 
 NUM_CONTAINERS=${#CONTAINERS[@]}
 if [ ${NUM_CONTAINERS} -eq 0 ]; then
