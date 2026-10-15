@@ -126,7 +126,8 @@ fi
 # With --persistent, a persistent container
 if [ "${NO_DEFAULT}" -eq 0 ]; then
   # By default, the container of the default name
-  if docker ps -a --format '{{.Names}}' | grep -xq "${DEFAULT_PERSISTENT_NAME}"; then
+  LISTED=$(docker ps -a --format '{{.Names}}')
+  if grep -xq "${DEFAULT_PERSISTENT_NAME}" <<<"${LISTED}"; then
     attach_existing "${DEFAULT_PERSISTENT_NAME}"
     exit 0
   else
@@ -188,7 +189,8 @@ case "$CHOICE" in
       exit 1
     fi
     NAME="$(normalize_name "${NAME_IN}")"
-    if docker ps -a --format '{{.Names}}' | grep -xq "${NAME}"; then
+    LISTED=$(docker ps -a --format '{{.Names}}')
+    if grep -xq "${NAME}" <<<"${LISTED}"; then
       echo "Container ${NAME} already exists. Aborting." >&2
       exit 1
     fi
