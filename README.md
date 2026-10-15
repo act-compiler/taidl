@@ -16,7 +16,7 @@ For detailed evaluations, please refer to our [MICRO 2025 Artifact](https://gith
 TAIDL needs Python 3.14 or later.
 
 ```bash
-pip install git+https://github.com/act-compiler/taidl.git@v2.12
+pip install git+https://github.com/act-compiler/taidl.git@v2.13
 ```
 
 For development:
