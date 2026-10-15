@@ -20,3 +20,14 @@ include = ["taidl*"]
 
 [tool.setuptools.package-data]
 "taidl.antlr4" = ["*.g4", "*.interp", "*.tokens"]
+
+[tool.ruff]
+line-length = 100
+# Python files alone, not markdown code blocks
+include = ["*.py"]
+# The generated parser modules, never formatted or linted
+extend-exclude = ["taidl/antlr4/IDLV2*.py"]
+
+[tool.ruff.format]
+indent-style = "space"
+quote-style = "single"

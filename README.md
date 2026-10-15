@@ -39,6 +39,7 @@ pip install -e .
 ```
 
 `tests/pytest.sh` runs the tests in `devanshdvj/act-env:py3.14-jax0.11.2`, the image `docker/act.env` names, in its tag for the host's architecture, amd64 or arm64.
+Ahead of the tests, the CI checks the formatting and lint against `pyproject.toml` and `.editorconfig` with `./docker/exec.sh "ruff format --check && ruff check && shfmt -d ."`.
 
 ## Specs
 
