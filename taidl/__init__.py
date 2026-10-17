@@ -1,6 +1,6 @@
 """TAIDL - Tensor Accelerator ISA Definition Language"""
 
-__version__ = '2.13'
+__version__ = '2.14'
 
 from .accelerator import Accelerator
 from .data_model import DataModel, State
