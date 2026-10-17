@@ -5,18 +5,6 @@ set -euo pipefail
 cd "$(dirname "$0")"
 source act.env
 
-# Detect architecture
-ARCH=$(uname -m)
-
-if [ "$ARCH" = "x86_64" ]; then
-  IMAGE_NAME="devanshdvj/act-env:${ACT_ENV_TAG}-amd64"
-elif [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then
-  IMAGE_NAME="devanshdvj/act-env:${ACT_ENV_TAG}-arm64"
-else
-  echo "Error: Unsupported architecture: $ARCH" >&2
-  exit 1
-fi
-
 usage() {
   echo "Usage: $0 [-h|--help]"
 }
@@ -29,16 +17,27 @@ for arg in "$@"; do
       exit 0
       ;;
     *)
-      echo "Unknown argument: $arg" >&2
+      echo "Unknown arg: $arg" >&2
       usage >&2
       exit 1
       ;;
   esac
 done
 
+# Detect architecture
+ARCH=$(uname -m)
+
+if [ "$ARCH" = "x86_64" ]; then
+  IMAGE_NAME="devanshdvj/act-env:${ACT_ENV_TAG}-amd64"
+elif [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then
+  IMAGE_NAME="devanshdvj/act-env:${ACT_ENV_TAG}-arm64"
+else
+  echo "Error: Unsupported architecture: $ARCH" >&2
+  exit 1
+fi
+
 # Every container of the image
-LISTED=$(docker ps -a --format '{{.ID}} {{.Names}} {{.Image}} {{.Status}}')
-mapfile -t CONTAINERS < <(awk -v img="${IMAGE_NAME}" '$3 == img' <<<"${LISTED}")
+mapfile -t CONTAINERS < <(docker ps -a --format '{{.ID}} {{.Names}} {{.Image}} {{.Status}}' | awk -v img="${IMAGE_NAME}" '$3 == img')
 
 NUM_CONTAINERS=${#CONTAINERS[@]}
 if [ ${NUM_CONTAINERS} -eq 0 ]; then
@@ -58,7 +57,10 @@ for line in "${CONTAINERS[@]}"; do
   case "${RESP}" in
     y | Y)
       echo "Removing ${CNAME}..."
-      docker rm -f "${CID}"
+      docker rm -f "${CID}" || {
+        echo "Failed to remove ${CNAME}" >&2
+        FAILED=1
+      }
       ;;
     *)
       echo "Keeping ${CNAME}."
@@ -68,3 +70,4 @@ done
 
 echo
 echo "Done."
+exit "${FAILED:-0}"

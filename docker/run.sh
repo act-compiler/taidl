@@ -61,22 +61,22 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-# List the persistent containers, taidl-<base>-<username>
+# Helper: List all persistent containers of form taidl-<base>-<username>
 list_persistent_all() {
   docker ps -a --format '{{.Names}}\t{{.Image}}\t{{.Status}}' |
     awk -v user="${USER_NAME}" -F '\t' '$1 ~ ("^taidl-.*-"user"$") { print $0 }'
 }
 
-# Normalize a name to taidl-<base>-<username>
+# Helper: Ensure name is normalized to: taidl-<base>-<username>
 normalize_name() {
   local raw="$1"
   local prefix="taidl-"
   local suffix="-${USER_NAME}"
 
-  # Drop a leading prefix
+  # remove leading prefix if present
   local base="${raw#${prefix}}"
 
-  # Drop a trailing suffix
+  # remove trailing suffix if present
   if [[ "${base}" == *"${suffix}" ]]; then
     base="${base%${suffix}}"
   fi
@@ -84,7 +84,7 @@ normalize_name() {
   printf '%s' "${prefix}${base}${suffix}"
 }
 
-# Create a persistent container
+# Helper: Create persistent container
 create_persistent() {
   local name="$1"
   echo "Creating persistent container (will not be removed on exit) with name ${name}."
@@ -96,7 +96,7 @@ create_persistent() {
     "${IMAGE_NAME}"
 }
 
-# Restart an existing container
+# Helper: Restart an existing container
 attach_existing() {
   local name="$1"
   echo "Restarting persistent container (will not be removed on exit) with name ${name}."
@@ -125,9 +125,8 @@ fi
 
 # With --persistent, a persistent container
 if [ "${NO_DEFAULT}" -eq 0 ]; then
-  # By default, the container of the default name
-  LISTED=$(docker ps -a --format '{{.Names}}')
-  if grep -xq "${DEFAULT_PERSISTENT_NAME}" <<<"${LISTED}"; then
+  # default behavior: use default name
+  if docker ps -a --format '{{.Names}}' | grep -xq "${DEFAULT_PERSISTENT_NAME}"; then
     attach_existing "${DEFAULT_PERSISTENT_NAME}"
     exit 0
   else
@@ -136,7 +135,7 @@ if [ "${NO_DEFAULT}" -eq 0 ]; then
   fi
 fi
 
-# With --no-default, one chosen or created here
+# If --no-default: interactive selection/creation
 EXISTING="$(list_persistent_all)"
 if [ -z "${EXISTING}" ]; then
   read -rp "No persistent containers found. Enter a name for the new persistent container (without suffix): " NAME_IN
@@ -154,7 +153,7 @@ if [ -z "${EXISTING}" ]; then
   exit 0
 fi
 
-# Offer a new container or an existing one
+# Present choices: create new or choose existing
 echo "Existing persistent containers:"
 echo -e "INDEX\tNAME\tIMAGE\tSTATUS"
 mapfile -t LINES < <(printf '%s\n' "${EXISTING}")
@@ -189,8 +188,7 @@ case "$CHOICE" in
       exit 1
     fi
     NAME="$(normalize_name "${NAME_IN}")"
-    LISTED=$(docker ps -a --format '{{.Names}}')
-    if grep -xq "${NAME}" <<<"${LISTED}"; then
+    if docker ps -a --format '{{.Names}}' | grep -xq "${NAME}"; then
       echo "Container ${NAME} already exists. Aborting." >&2
       exit 1
     fi

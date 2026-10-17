@@ -15,13 +15,12 @@ else
 fi
 
 HOST_MOUNT="$(pwd)/.."
-# One name per run, for the trap
+# One name per call: the trap removes this run's container
 CONTAINER_NAME="taidl-exec-$$-${RANDOM}"
 
-# Remove the container and restore the caller's ownership
+# At exit: remove the container, restore the caller's ownership
 restore_ownership() {
   local status=$?
-  # Already gone after a run that ends itself
   docker rm -f "${CONTAINER_NAME}" >/dev/null 2>&1 || true
   ./chown.sh >/dev/null 2>&1 || echo "warning: could not restore the ownership of the files this run wrote" >&2
   exit "$status"
@@ -31,7 +30,7 @@ trap restore_ownership EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-# In the foreground, so a signal waits for it
+# Created in the foreground: a signal waits for it
 docker create --rm --name "${CONTAINER_NAME}" --entrypoint bash \
   -v "${HOST_MOUNT}:/workspace:rw" \
   -w /workspace \
