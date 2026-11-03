@@ -109,8 +109,8 @@ A `dot` gives both its contracting lists, either of which may be empty, and a ba
 
 ## Element types
 
-Each operation word takes the element types of its row below, at its first operand, or at its result where it has none.
-`dot` takes them at both operands and at its result.
+Each operation word accepts the element types of its row below, at its first operand, or at its result where it has no operand.
+`dot` accepts them at both operands and at its result.
 The floats are the `f` and `bf` types, and the integers the `s` and `u` types.
 Every type is a float, an integer or `pred`.
 The start indices of `dynamic_slice`, `dynamic_update_slice` and `gather` are integers.
