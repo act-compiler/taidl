@@ -10,7 +10,7 @@ from antlr4.tree.Trees import Trees
 from .antlr4 import IDLV2ExprLexer, IDLV2ExprParser, IDLV2Lexer, IDLV2Parser
 from .data_model import DataModel, State
 from .names import check_name
-from .operations import check_operations
+from .operations import Fault, check_operations
 
 # Start or size: integer, or expression over attributes and state
 Extent = int | str
@@ -279,8 +279,8 @@ class Instruction:
             raise SyntaxError(
                 f'{self.instruction}: semantics needs exactly one ROOT, found {roots}'
             )
-        # Each line takes what its word's row gives
-        fault = check_operations(tree)
+        # Each line takes what its word's row gives, and its literals fit 64 bits
+        fault = check_operations(tree) or semantics_literal_fault(tree)
         if fault:
             token, message = fault
             raise SyntaxError(
@@ -356,6 +356,11 @@ class Instruction:
             if name.text[3:] not in declared[kind]:
                 message = f"'{name.text}' names no {KINDS[kind]}"
                 raise self.text_error(place, text, token, name.line, name.column + 1, message)
+        # Each literal fits 64 bits, and no divisor is the literal 0
+        fault = expression_literal_fault(tree)
+        if fault:
+            symbol, message = fault
+            raise self.text_error(place, text, token, symbol.line, symbol.column + 1, message)
         return tree.getChild(0)
 
     def text_error(
@@ -390,6 +395,46 @@ RULES = {
 
 # What each kind of reference names
 KINDS = {'@a.': 'addressing attribute', '@c.': 'computational attribute', '@s.': 'state variable'}
+
+# The integers a literal may write: signed 64-bit
+INT64 = range(-(2**63), 2**63)
+
+
+def expression_literal_fault(tree) -> Fault | None:
+    """An expression's first literal past 64 bits or division by the literal 0."""
+    faults = [
+        (node.getSymbol(), f"'{node.getText()}' is past 64 bits")
+        for node in Trees.findAllTokenNodes(tree, IDLV2ExprParser.INT)
+        if int(node.getText()) not in INT64
+    ]
+    for operator in (IDLV2ExprParser.SLASH, IDLV2ExprParser.PERCENT):
+        for node in Trees.findAllTokenNodes(tree, operator):
+            # Its right operand, the next child of its run
+            siblings = node.parentCtx.children
+            if siblings[siblings.index(node) + 1].getText() == '0':
+                faults.append((node.getSymbol(), f"'{node.getText()}' divides by zero"))
+    return min(faults, key=lambda fault: fault[0].tokenIndex, default=None)
+
+
+def semantics_literal_fault(semantics: IDLV2Parser.ModuleContext) -> Fault | None:
+    """A semantics' first integer literal past 64 bits, in a dimension or an attribute."""
+    parts = [
+        part
+        for line in semantics.instruction()
+        for part in (line.result_type(), line.attributes())
+        if part is not None
+    ]
+    nodes = [
+        node
+        for part in parts
+        for kind in (IDLV2Parser.INT, IDLV2Parser.NUMBER)
+        for node in Trees.findAllTokenNodes(part, kind)
+    ]
+    for node in sorted(nodes, key=lambda node: node.getSymbol().tokenIndex):
+        text = node.getText()
+        if re.fullmatch(r'-?[0-9]+', text) and int(text) not in INT64:
+            return node.getSymbol(), f"'{text}' is past 64 bits"
+    return None
 
 
 def parse(lexer_class, parser_class, rule: str, text: str):
